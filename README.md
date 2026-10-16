@@ -1,2 +1,2 @@
 # pandavs
-not a weak character
+not a single weak character
