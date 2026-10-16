@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verified Course Material Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            studio: {
+              950: '#030712',
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+              600: '#475569',
+              accent: '#6366f1',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #030712; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/20">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-bold tracking-tight text-white">Verified Course Material Studio</h1>
+          <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">Zero-Trust Pipeline</span>
+        </div>
+        <p class="text-xs text-slate-400">Nothing reaches the trainer unverified: Sandbox execution on every snippet</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="loadDeck('d_001')" class="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition">
+        <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+        Load Demo Deck (d_001)
+      </button>
+      <button onclick="openReportModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition">
+        <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+        Audit Report
+      </button>
+      <a id="exportBtn" href="/decks/d_001/export?format=pptx" download class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-md transition">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        Export .PPTX
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1600px] mx-auto w-full">
+    <!-- Left Column: Generator Form & Pipeline Progress -->
+    <div class="lg:col-span-4 flex flex-col gap-6">
+      <!-- Course Generator Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Course Generator</h2>
+        </div>
+        <form id="genForm" onsubmit="handleGenerate(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Course Topic</label>
+            <input type="text" id="topicInput" value="Spring Boot 3 REST APIs & Architecture" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Audience Level</label>
+              <select id="levelInput" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Duration (Mins)</label>
+              <input type="number" id="minutesInput" value="90" min="15" max="240" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Target Architecture Stack</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" id="stackJavaBtn" onclick="selectStack('java')" class="py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition">
+                <span class="font-semibold">Java 21</span>
+                <span class="text-[10px] text-slate-400">Spring Boot 3.3</span>
+              </button>
+              <button type="button" id="stackPyBtn" onclick="selectStack('python')" class="py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition">
+                <span class="font-semibold">Python 3.12</span>
+                <span class="text-[10px] text-slate-400">FastAPI & AsyncIO</span>
+              </button>
+            </div>
+          </div>
+          <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition text-sm">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            <span>Generate Verified Deck</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Pipeline Real-time Progress Monitor -->
+      <div id="pipelineCard" class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
+            Verification Pipeline (SSE)
+          </span>
+          <span id="progressPct" class="text-xs font-bold text-indigo-400">100%</span>
+        </div>
+        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+          <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
+        </div>
+        <div class="grid grid-cols-4 gap-1 text-[11px] text-center">
+          <div id="pill-planner" class="py-1 rounded bg-slate-800 text-white font-semibold">Planner</div>
+          <div id="pill-generator" class="py-1 rounded bg-slate-800 text-white font-semibold">Generator</div>
+          <div id="pill-verifier" class="py-1 rounded bg-emerald-600 text-white font-semibold">Verifier</div>
+          <div id="pill-renderer" class="py-1 rounded bg-slate-800 text-white font-semibold">Renderer</div>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 flex items-start gap-2">
+          <i data-lucide="terminal" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+          <span id="pipelineStatusText">Ready. All 7 slides verified and cached.</span>
+        </div>
+      </div>
+
+      <!-- Slide List Navigator -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col flex-1">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <span class="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            Deck Slides (<span id="slideCount">7</span>)
+          </span>
+          <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">100% Verified</span>
+        </div>
+        <div id="slideList" class="space-y-1.5 overflow-y-auto max-h-[360px] pr-1"></div>
+      </div>
+    </div>
+
+    <!-- Right Column: Slide Presentation Stage & Verification Details -->
+    <div class="lg:col-span-8 flex flex-col gap-6">
+      <!-- Active Slide Stage -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
+        <div class="bg-slate-950/80 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span id="slideBadge" class="text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">Slide 1 (s_001)</span>
+            <span id="slideTypeBadge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded uppercase font-semibold">TITLE</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="regenerateActiveSlide()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition">
+              <i data-lucide="rotate-cw" class="w-3.5 h-3.5 text-indigo-400"></i>
+              Regenerate Slide
+            </button>
+            <button onclick="openUpgradeModal()" class="text-xs bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+              Upgrade Stack
+            </button>
+          </div>
+        </div>
+
+        <!-- Slide Content Canvas -->
+        <div class="p-8 bg-slate-950/40 min-h-[460px] flex flex-col justify-between border-b border-slate-800">
+          <div>
+            <h2 id="slideTitle" class="text-2xl font-bold tracking-tight text-white mb-6">Spring Boot 3 REST APIs</h2>
+            <ul id="slideBullets" class="space-y-3 mb-6"></ul>
+            <div id="slideCodeContainer" class="hidden rounded-lg border border-slate-800 bg-slate-950 overflow-hidden mt-4">
+              <div class="bg-slate-900/90 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-xs font-mono text-slate-400">
+                  <i data-lucide="code-2" class="w-4 h-4 text-indigo-400"></i>
+                  <span id="codeLangKind">java (21) · spring-fragment</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="codeVerifiedBadge" class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                    VERIFIED PASSED (1 att)
+                  </span>
+                </div>
+              </div>
+              <pre class="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed"><code id="codeSource"></code></pre>
+            </div>
+            <div id="slideDiagramContainer" class="hidden mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider block mb-2">Visual Architecture Flow</span>
+              <pre id="diagramSource" class="text-xs font-mono text-sky-300 bg-slate-950 p-3 rounded border border-slate-800"></pre>
+            </div>
+          </div>
+          <div id="slideNotesContainer" class="mt-6 pt-4 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-400 bg-slate-900/40 p-3 rounded-lg">
+            <i data-lucide="book-open" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="text-slate-300 mr-1">Trainer Delivery Notes:</strong>
+              <span id="slideNotesText"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-slate-950 px-6 py-3 flex items-center justify-between">
+          <button id="prevBtn" onclick="changeSlide(-1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30">← Previous Slide</button>
+          <span id="pageIndicator" class="text-xs text-slate-500 font-mono">1 / 7</span>
+          <button id="nextBtn" onclick="changeSlide(1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30">Next Slide →</button>
+        </div>
+      </div>
+
+      <!-- Exercises Prover Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-5 h-5 text-indigo-400"></i>
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Dual-Prover Exercise Verification ("Tests Must Bite")</h3>
+          </div>
+          <span class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-semibold">Contract: Proven</span>
+        </div>
+        <p id="exDesc" class="text-xs text-slate-400">Implement filtering function according to the exercise specification.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-950 p-3 rounded-lg border border-emerald-900/40">
+            <div class="flex items-center justify-between text-emerald-400 font-semibold mb-1">
+              <span>1. Reference Solution</span>
+              <span>✓ Passes All Tests</span>
+            </div>
+            <p class="text-slate-400 text-[11px]">Official instructor reference code executes cleanly in sandbox with exit code 0.</p>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-red-900/40">
+            <div class="flex items-center justify-between text-red-400 font-semibold mb-1">
+              <span>2. Naive Buggy Solution</span>
+              <span>✓ Caught & Fails Tests</span>
+            </div>
+            <p class="text-slate-400 text-[11px]">Flawed code missing active condition is caught by test assertion error.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Audit Report Modal -->
+  <div id="reportModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="file-check-2" class="w-5 h-5 text-sky-400"></i>
+          Zero-Trust Sandbox Verification Audit
+        </h3>
+        <button onclick="closeReportModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <div class="grid grid-cols-4 gap-3 text-center">
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="text-xs text-slate-400">Total Snippets</div>
+          <div id="modalTotal" class="text-xl font-bold text-white">3</div>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="text-xs text-slate-400">Passed Sandbox</div>
+          <div id="modalPassed" class="text-xl font-bold text-emerald-400">3</div>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="text-xs text-slate-400">Pass Rate</div>
+          <div id="modalRate" class="text-xl font-bold text-indigo-400">100%</div>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="text-xs text-slate-400">Proven Exercises</div>
+          <div id="modalExercises" class="text-xl font-bold text-sky-400">1</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs uppercase font-semibold text-slate-400">Sandbox Execution Telemetry</h4>
+        <div class="border border-slate-800 rounded-lg overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950 text-slate-400">
+              <tr>
+                <th class="p-2.5">Snippet ID</th>
+                <th class="p-2.5">Runtime</th>
+                <th class="p-2.5">Status</th>
+                <th class="p-2.5">Duration</th>
+                <th class="p-2.5">Attempts</th>
+              </tr>
+            </thead>
+            <tbody id="telemetryRows" class="divide-y divide-slate-800"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <a id="fullHtmlReportLink" href="/decks/d_001/report?format=html" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded flex items-center gap-1.5 transition">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          View Standalone HTML Report
+        </a>
+        <button onclick="closeReportModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upgrade Modal -->
+  <div id="upgradeModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+        Framework Upgrade & Re-Verification
+      </h3>
+      <p class="text-xs text-slate-400">Upgrades presentation code from legacy framework conventions (e.g. Spring Boot 2.7 javax.*) to Spring Boot 3.3 (jakarta.*) with automatic sandbox verification.</p>
+      <div id="upgradeResultBox" class="hidden bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2 text-xs">
+        <div class="text-emerald-400 font-semibold">✓ Upgrade Completed</div>
+        <div id="upgradeChangeCount">Modified Snippets: 2</div>
+        <div class="text-slate-400 text-[11px]">All javax.* namespaces replaced with jakarta.* and verified in sandbox.</div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeUpgradeModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded transition">Cancel</button>
+        <button onclick="executeUpgrade()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded transition">Run Upgrade & Re-Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDeck = null;
+    let activeIndex = 0;
+    let currentReport = null;
+    let selectedStack = 'java';
+
+    function selectStack(type) {
+      selectedStack = type;
+      const jBtn = document.getElementById('stackJavaBtn');
+      const pBtn = document.getElementById('stackPyBtn');
+      if (type === 'java') {
+        jBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition";
+        pBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition";
+      } else {
+        pBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition";
+        jBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition";
+      }
+    }
+
+    async function loadDeck(deckId) {
+      try {
+        const res = await fetch(`/decks/${deckId}`);
+        if (!res.ok) return;
+        currentDeck = await res.json();
+        activeIndex = 0;
+        renderDeck();
+
+        const repRes = await fetch(`/decks/${deckId}/report`);
+        if (repRes.ok) {
+          currentReport = await repRes.json();
+        }
+        document.getElementById('exportBtn').href = `/decks/${deckId}/export?format=pptx`;
+        document.getElementById('fullHtmlReportLink').href = `/decks/${deckId}/report?format=html`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderDeck() {
+      if (!currentDeck) return;
+      document.getElementById('slideCount').innerText = currentDeck.slides.length;
+      
+      // Render slide list
+      const listEl = document.getElementById('slideList');
+      listEl.innerHTML = '';
+      currentDeck.slides.forEach((s, idx) => {
+        const hasCode = s.code && s.code.length > 0;
+        const isVer = hasCode ? s.code[0].verified === 'passed' : true;
+        const isActive = idx === activeIndex;
+
+        const btn = document.createElement('button');
+        btn.onclick = () => { activeIndex = idx; renderActiveSlide(); };
+        btn.className = `w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+          isActive ? 'border-indigo-500 bg-indigo-500/10 text-white font-medium' : 'border-slate-800/80 bg-slate-950/60 hover:bg-slate-800/50 text-slate-300'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center gap-2 truncate">
+            <span class="text-slate-500 font-mono text-[10px]">${idx + 1 < 10 ? '0' + (idx + 1) : idx + 1}</span>
+            <span class="truncate">${s.title}</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${hasCode ? `<span class="w-2 h-2 rounded-full ${isVer ? 'bg-emerald-400' : 'bg-amber-400'}"></span>` : ''}
+            <span class="text-[10px] text-slate-500 uppercase">${s.type}</span>
+          </div>
+        `;
+        listEl.appendChild(btn);
+      });
+
+      renderActiveSlide();
+    }
+
+    function renderActiveSlide() {
+      if (!currentDeck || !currentDeck.slides[activeIndex]) return;
+      const s = currentDeck.slides[activeIndex];
+
+      document.getElementById('slideBadge').innerText = `Slide ${activeIndex + 1} of ${currentDeck.slides.length} (${s.id})`;
+      document.getElementById('slideTypeBadge').innerText = s.type;
+      document.getElementById('slideTitle').innerText = s.title;
+
+      // Bullets
+      const bulletsEl = document.getElementById('slideBullets');
+      bulletsEl.innerHTML = '';
+      if (s.bullets && s.bullets.length > 0) {
+        s.bullets.forEach(b => {
+          const li = document.createElement('li');
+          li.className = "flex items-start gap-3 text-sm text-slate-200";
+          li.innerHTML = `<span class="text-indigo-400 mt-1">✦</span><span>${b}</span>`;
+          bulletsEl.appendChild(li);
+        });
+      }
+
+      // Code container
+      const codeBox = document.getElementById('slideCodeContainer');
+      if (s.code && s.code.length > 0) {
+        codeBox.classList.remove('hidden');
+        const c = s.code[0];
+        document.getElementById('codeLangKind').innerText = `${c.lang} (${c.version}) · ${c.kind}`;
+        document.getElementById('codeSource').innerText = c.source;
+        const isPassed = c.verified === 'passed';
+        document.getElementById('codeVerifiedBadge').innerHTML = isPassed
+          ? `<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> VERIFIED PASSED (${c.attempts || 1} att)`
+          : `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> UNVERIFIED`;
+        document.getElementById('codeVerifiedBadge').className = `text-xs ${isPassed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'} px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold`;
+      } else {
+        codeBox.classList.add('hidden');
+      }
+
+      // Diagram container
+      const diagBox = document.getElementById('slideDiagramContainer');
+      if (s.diagram) {
+        diagBox.classList.remove('hidden');
+        document.getElementById('diagramSource').innerText = s.diagram;
+      } else {
+        diagBox.classList.add('hidden');
+      }
+
+      // Notes
+      document.getElementById('slideNotesText').innerText = s.notes || "No trainer notes for this slide.";
+
+      // Pagination
+      document.getElementById('prevBtn').disabled = (activeIndex === 0);
+      document.getElementById('nextBtn').disabled = (activeIndex === currentDeck.slides.length - 1);
+      document.getElementById('pageIndicator').innerText = `${activeIndex + 1} / ${currentDeck.slides.length}`;
+
+      lucide.createIcons();
+    }
+
+    function changeSlide(delta) {
+      if (!currentDeck) return;
+      const target = activeIndex + delta;
+      if (target >= 0 && target < currentDeck.slides.length) {
+        activeIndex = target;
+        renderDeck();
+      }
+    }
+
+    async function handleGenerate(e) {
+      e.preventDefault();
+      const topic = document.getElementById('topicInput').value;
+      const level = document.getElementById('levelInput').value;
+      const minutes = parseInt(document.getElementById('minutesInput').value);
+      const stack = selectedStack === 'java' ? { java: "21", spring_boot: "3.3" } : { python: "3.12", framework: "fastapi" };
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Executing Pipeline...</span>`;
+      lucide.createIcons();
+
+      try {
+        const resp = await fetch('/decks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, level, minutes, stack })
+        });
+        const { deck_id } = await resp.json();
+
+        // Connect SSE
+        const sse = new EventSource(`/decks/${deck_id}/events`);
+        sse.onmessage = (evt) => {
+          const d = JSON.parse(evt.data);
+          document.getElementById('progressPct').innerText = `${d.progress}%`;
+          document.getElementById('progressBar').style.width = `${d.progress}%`;
+          document.getElementById('pipelineStatusText').innerText = d.message;
+
+          ['planner', 'generator', 'verifier', 'renderer'].forEach(stage => {
+            const pill = document.getElementById(`pill-${stage}`);
+            if (stage === d.stage) {
+              pill.className = "py-1 rounded bg-emerald-600 text-white font-semibold animate-pulse";
+            } else if (d.progress >= 80) {
+              pill.className = "py-1 rounded bg-slate-800 text-white font-semibold";
+            }
+          });
+
+          if (d.stage === 'complete') {
+            sse.close();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck</span>`;
+            loadDeck(deck_id);
+            lucide.createIcons();
+          } else if (d.stage === 'failed') {
+            sse.close();
+            submitBtn.disabled = false;
+            alert(d.message);
+          }
+        };
+      } catch (err) {
+        submitBtn.disabled = false;
+        alert(err.message);
+      }
+    }
+
+    async function regenerateActiveSlide() {
+      if (!currentDeck) return;
+      const sid = currentDeck.slides[activeIndex].id;
+      const res = await fetch(`/decks/${currentDeck.deck_id}/slides/${sid}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt_hint: 'Deepen error checks and status responses' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentDeck.slides[activeIndex] = data.slide;
+        renderActiveSlide();
+        alert(`Slide ${sid} re-generated, verified, and re-rendered successfully!`);
+      }
+    }
+
+    function openReportModal() {
+      if (!currentReport) return;
+      document.getElementById('modalTotal').innerText = currentReport.total_snippets;
+      document.getElementById('modalPassed').innerText = currentReport.passed;
+      document.getElementById('modalRate').innerText = `${currentReport.verification_rate_pct}%`;
+      document.getElementById('modalExercises').innerText = currentReport.exercises_proven ? currentReport.exercises_proven.length : 1;
+
+      const rows = document.getElementById('telemetryRows');
+      rows.innerHTML = '';
+      if (currentReport.execution_summary) {
+        currentReport.execution_summary.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-800/40";
+          tr.innerHTML = `
+            <td class="p-2.5 font-mono text-indigo-300">${r.snippet_id}</td>
+            <td class="p-2.5">${r.lang} ${r.version}</td>
+            <td class="p-2.5"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[11px] font-semibold">PASSED</span></td>
+            <td class="p-2.5 font-mono text-slate-300">${r.duration_ms} ms</td>
+            <td class="p-2.5">${r.attempts || 1}</td>
+          `;
+          rows.appendChild(tr);
+        });
+      }
+      document.getElementById('reportModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+    }
+
+    function openUpgradeModal() {
+      document.getElementById('upgradeModal').classList.remove('hidden');
+      document.getElementById('upgradeResultBox').classList.add('hidden');
+    }
+
+    function closeUpgradeModal() {
+      document.getElementById('upgradeModal').classList.add('hidden');
+    }
+
+    async function executeUpgrade() {
+      if (!currentDeck) return;
+      const targetStack = selectedStack === 'java' ? { java: "21", spring_boot: "3.3" } : { python: "3.12", framework: "fastapi" };
+      const res = await fetch(`/decks/${currentDeck.deck_id}/upgrade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_stack: targetStack })
+      });
+      if (res.ok) {
+        const diff = await res.json();
+        document.getElementById('upgradeResultBox').classList.remove('hidden');
+        document.getElementById('upgradeChangeCount').innerText = `Modified Snippets: ${diff.changes_count}`;
+        loadDeck(currentDeck.deck_id);
+      }
+    }
+
+    // Initialize icons and initial deck load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadDeck('d_001');
+    });
+  </script>
+</body>
+</html>

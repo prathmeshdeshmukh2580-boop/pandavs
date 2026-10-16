@@ -1,22 +1,26 @@
-# Build context is the repo root so the API can see schema/, samples/, services/ and templates/.
 FROM python:3.12-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DATA_DIR=/data
 
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    default-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements from root services and app
 COPY apps/api/requirements.txt apps/api/requirements.txt
-RUN pip install --no-cache-dir -r apps/api/requirements.txt
+COPY services/verifier/requirements.txt services/verifier/requirements.txt
+COPY services/renderer/requirements.txt services/renderer/requirements.txt
 
-# Mirror the repo layout so config.REPO_ROOT resolves to /app.
-COPY schema/ schema/
-COPY samples/ samples/
-COPY services/ services/
-COPY templates/ templates/
-COPY apps/api/ apps/api/
+RUN pip install --no-cache-dir \
+    -r apps/api/requirements.txt \
+    -r services/verifier/requirements.txt \
+    -r services/renderer/requirements.txt
 
-WORKDIR /app/apps/api
+# Copy project files
+COPY . .
+
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["python", "-m", "uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

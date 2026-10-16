@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install -r apps/api/requirements.txt -r services/verifier/requirements.txt -r services/renderer/requirements.txt
+      - name: Run test suite
+        run: |
+          pytest -q apps services -m "not slow"
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install and build Next.js
+        run: |
+          cd apps/web && npm ci && npm run build
+
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate sample decks against schema
+        run: |
+          python -c "
+          import json, jsonschema
+          with open('schema/deck.schema.json') as sf:
+              schema = json.load(sf)
+          with open('samples/spring_boot_deck.json') as df:
+              deck = json.load(df)
+          jsonschema.validate(instance=deck, schema=schema)
+          print('Schema validation passed')
+          "

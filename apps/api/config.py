@@ -1,27 +1,31 @@
-"""Central configuration. Everything comes from environment variables (.env)."""
-from __future__ import annotations
-
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
 
-# Repo root: apps/api/config.py -> parents[2]. Same layout is mirrored inside the API container.
-REPO_ROOT = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / ".env")
 
-load_dotenv(REPO_ROOT / ".env")
+class Settings:
+    PROJECT_NAME: str = "Verified Course Material Studio API"
+    VERSION: str = "1.0.0"
+    
+    # LLM Settings
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
+    
+    # Sandbox Settings
+    SANDBOX_TIMEOUT_SEC: int = int(os.getenv("SANDBOX_TIMEOUT_SEC", "30"))
+    SANDBOX_MEMORY_MB: int = int(os.getenv("SANDBOX_MEMORY_MB", "512"))
+    MAX_FIX_ATTEMPTS: int = int(os.getenv("MAX_FIX_ATTEMPTS", "3"))
+    
+    # Storage Paths
+    DATA_DIR: Path = BASE_DIR / os.getenv("DATA_DIR", "data")
+    SCHEMA_FILE: Path = BASE_DIR / "schema" / "deck.schema.json"
+    SAMPLES_DIR: Path = BASE_DIR / "samples"
+    
+    # Server Settings
+    PORT: int = int(os.getenv("PORT", "8000"))
+    HOST: str = os.getenv("HOST", "0.0.0.0")
 
-SCHEMA_PATH = Path(os.getenv("SCHEMA_PATH", REPO_ROOT / "schema" / "deck.schema.json"))
-SAMPLES_DIR = REPO_ROOT / "samples"
-
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "")
-
-SANDBOX_TIMEOUT_SEC = int(os.getenv("SANDBOX_TIMEOUT_SEC", "60"))
-SANDBOX_MEMORY_MB = int(os.getenv("SANDBOX_MEMORY_MB", "512"))
-MAX_FIX_ATTEMPTS = int(os.getenv("MAX_FIX_ATTEMPTS", "3"))
-
-_data_dir = Path(os.getenv("DATA_DIR", "./data"))
-DATA_DIR = _data_dir if _data_dir.is_absolute() else (REPO_ROOT / _data_dir).resolve()
-
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+settings = Settings()
+settings.DATA_DIR.mkdir(parents=True, exist_ok=True)

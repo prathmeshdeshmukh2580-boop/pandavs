@@ -1,0 +1,57 @@
+{
+  "deck_id": "d_001",
+  "topic": "Spring Boot 3 REST APIs & Modern Architecture",
+  "generated_at": "2026-10-16T19:40:00Z",
+  "total_slides": 7,
+  "total_snippets": 3,
+  "passed": 3,
+  "failed": 0,
+  "unverified": 0,
+  "verification_rate_pct": 100.0,
+  "sandbox_type": "Docker / Native Isolate",
+  "execution_summary": [
+    {
+      "snippet_id": "c_001",
+      "slide_id": "s_003",
+      "lang": "java",
+      "version": "21",
+      "status": "passed",
+      "duration_ms": 340,
+      "attempts": 1,
+      "cached": true,
+      "error": null
+    },
+    {
+      "snippet_id": "c_002",
+      "slide_id": "s_004",
+      "lang": "java",
+      "version": "21",
+      "status": "passed",
+      "duration_ms": 280,
+      "attempts": 1,
+      "cached": true,
+      "error": null
+    },
+    {
+      "snippet_id": "c_003",
+      "slide_id": "s_006",
+      "lang": "python",
+      "version": "3.12",
+      "status": "passed",
+      "duration_ms": 42,
+      "attempts": 1,
+      "cached": true,
+      "error": null
+    }
+  ],
+  "exercises_proven": [
+    {
+      "exercise_id": "e_001",
+      "title": "Item Filter & Discount Calculator",
+      "reference_passes": true,
+      "naive_fails": true,
+      "tests_must_bite": true,
+      "status": "proven"
+    }
+  ]
+}
