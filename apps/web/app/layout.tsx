@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-
-const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Verified Course Material Studio",
-  description:
-    "Generate training decks where every code snippet is compiled and run in a sandbox before it reaches you.",
+  description: "Zero-trust course material generation and verification studio",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
-      <body className="min-h-screen font-sans">{children}</body>
+    <html lang="en">
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
+        {children}
+      </body>
     </html>
   );
 }

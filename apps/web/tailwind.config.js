@@ -1,19 +1,25 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
-      },
       colors: {
-        ink: { 950: "#07080f", 900: "#0d1020", 800: "#151a30" },
-        verified: "#34d399",
-        warn: "#fbbf24",
-        danger: "#f87171",
-      },
+        studio: {
+          950: '#030712',
+          900: '#0f172a',
+          800: '#1e293b',
+          700: '#334155',
+          600: '#475569',
+          accent: '#6366f1',
+          emerald: '#10b981',
+          amber: '#f59e0b',
+        }
+      }
     },
   },
   plugins: [],
-};
+}

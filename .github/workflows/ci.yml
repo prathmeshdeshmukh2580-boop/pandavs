@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install -r apps/api/requirements.txt -r services/verifier/requirements.txt -r services/renderer/requirements.txt
+      - name: Run test suite
+        run: |
+          pytest -q apps services -m "not slow"
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # No cache: npm lock file is not committed; install fresh
+      - name: Install dependencies
+        run: cd apps/web && npm install
+      - name: Build Next.js
+        run: cd apps/web && npm run build
+
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install jsonschema
+        run: pip install jsonschema
+      - name: Validate sample decks against schema
+        run: |
+          python -c "
+          import json, jsonschema
+          with open('schema/deck.schema.json') as sf:
+              schema = json.load(sf)
+          # Only validate files that are actual decks (not reports)
+          import pathlib
+          deck_files = [p for p in pathlib.Path('samples').glob('*.json') if 'deck' in p.name]
+          for path in deck_files:
+              deck = json.loads(path.read_text(encoding='utf-8'))
+              jsonschema.validate(instance=deck, schema=schema)
+              print('Schema validation passed:', path.name)
+          "

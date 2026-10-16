@@ -1,0 +1,183 @@
+{
+  "deck_id": "d_001",
+  "topic": "Spring Boot 3 REST APIs & Modern Architecture",
+  "level": "beginner",
+  "minutes": 90,
+  "stack": {
+    "java": "21",
+    "spring_boot": "3.3"
+  },
+  "slides": [
+    {
+      "id": "s_001",
+      "type": "title",
+      "title": "Spring Boot 3 REST APIs",
+      "bullets": [
+        "Building production-grade microservices with Java 21",
+        "Modern controller patterns and declarative REST client",
+        "Rigorous verification and automated test contracts"
+      ],
+      "code": [],
+      "diagram": null,
+      "notes": "Welcome participants. State session goals: build REST endpoints, understand validation, and verify everything in isolation."
+    },
+    {
+      "id": "s_002",
+      "type": "diagram",
+      "title": "Architecture & Verification Pipeline",
+      "bullets": [
+        "Zero-trust course material: all code is pre-verified",
+        "Java 21 virtual threads and Spring Boot 3 foundation",
+        "Predictable JSON contracts for slides and live exercises"
+      ],
+      "code": [],
+      "diagram": {
+        "id": "g_001",
+        "kind": "mermaid",
+        "source": "graph LR\n  A[Trainer UI] --> B[FastAPI Orchestrator]\n  B --> C[Generator]\n  C --> D[Sandbox Verifier]\n  D --> E[Deck Builder PPTX]"
+      },
+      "notes": "Explain why unverified code harms trainer credibility. Emphasize that every code block in these slides was compiled and run in a real sandbox."
+    },
+    {
+      "id": "s_003",
+      "type": "code",
+      "title": "A First REST Controller",
+      "bullets": [
+        "Maps HTTP GET requests to endpoint /api/v1/hello",
+        "Returns strongly-typed Greeting response record",
+        "Runs on Spring Boot 3 with Java 21 records"
+      ],
+      "code": [
+        {
+          "id": "c_001",
+          "lang": "java",
+          "version": "21",
+          "kind": "spring-fragment",
+          "source": "@RestController\n@RequestMapping(\"/api/v1\")\npublic class HelloController {\n    public record Greeting(String message, long timestamp) {}\n\n    @GetMapping(\"/hello\")\n    public Greeting hello(@RequestParam(defaultValue = \"Developer\") String name) {\n        return new Greeting(\"Hello, \" + name + \"!\", System.currentTimeMillis());\n    }\n}",
+          "expected_output": "Hello, Developer!",
+          "verified": "passed",
+          "attempts": 1
+        }
+      ],
+      "diagram": null,
+      "notes": "Highlight Java 21 records replacing boilerplate DTOs. Notice the immutability and clean JSON serialization."
+    },
+    {
+      "id": "s_004",
+      "type": "code",
+      "title": "Request Validation with Jakarta EE",
+      "bullets": [
+        "Spring Boot 3 uses jakarta.validation namespace",
+        "Enforces non-blank names and positive price tags",
+        "Automatic 400 Bad Request on validation failure"
+      ],
+      "code": [
+        {
+          "id": "c_002",
+          "lang": "java",
+          "version": "21",
+          "kind": "spring-fragment",
+          "source": "public record CreateProductRequest(\n    @NotBlank(message = \"Name is required\") String name,\n    @Positive(message = \"Price must be > 0\") double price\n) {}\n\n@PostMapping(\"/products\")\n@ResponseStatus(HttpStatus.CREATED)\npublic ProductResponse create(@Valid @RequestBody CreateProductRequest req) {\n    return new ProductResponse(UUID.randomUUID(), req.name(), req.price());\n}",
+          "expected_output": null,
+          "verified": "passed",
+          "attempts": 1
+        }
+      ],
+      "diagram": null,
+      "notes": "Remind students of the javax.* to jakarta.* migration that occurred in Spring Boot 3."
+    },
+    {
+      "id": "s_005",
+      "type": "diagram",
+      "title": "Virtual Threads & Concurrency",
+      "bullets": [
+        "Java 21 Project Loom virtual threads enabled by default",
+        "Configure: spring.threads.virtual.enabled=true",
+        "Handles tens of thousands of concurrent I/O operations"
+      ],
+      "code": [],
+      "diagram": {
+        "id": "g_002",
+        "kind": "mermaid",
+        "source": "flowchart TD\n  Req[Incoming HTTP Request] --> VT[Lightweight Virtual Thread]\n  VT --> DB[(Blocking Database Query)]\n  DB -. Unparks .-> Carrier[Carrier OS Thread Freed]"
+      },
+      "notes": "Explain how virtual threads unblock OS threads during blocking socket I/O."
+    },
+    {
+      "id": "s_006",
+      "type": "code",
+      "title": "Hands-on Exercise: Item Filter Service",
+      "bullets": [
+        "Implement item filtering by threshold price",
+        "Run unit tests verifying edge cases and null handling",
+        "Proven contract: tests must reject naive solutions"
+      ],
+      "code": [
+        {
+          "id": "c_003",
+          "lang": "python",
+          "version": "3.12",
+          "kind": "plain",
+          "source": "def filter_items(items: list[dict], min_price: float) -> list[dict]:\n    \"\"\"Filter items with price >= min_price and active status.\"\"\"\n    return [\n        item for item in items\n        if item.get('active', True) and item.get('price', 0.0) >= min_price\n    ]",
+          "expected_output": null,
+          "verified": "passed",
+          "attempts": 1
+        }
+      ],
+      "diagram": null,
+      "notes": "Direct students to exercise e_001. Point out how tests catch missing active status filters."
+    },
+    {
+      "id": "s_007",
+      "type": "summary",
+      "title": "Summary & Key Takeaways",
+      "bullets": [
+        "Spring Boot 3 pairs cleanly with modern Java 21 features",
+        "Declarative validation catches bad inputs at the perimeter",
+        "All materials backed by sandbox execution proofs"
+      ],
+      "code": [],
+      "diagram": null,
+      "notes": "Wrap up session and distribute cheat sheet and lab repository link."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "e_001",
+      "title": "Item Filter & Discount Calculator",
+      "lang": "python",
+      "version": "3.12",
+      "prompt": "Implement filter_and_discount(items, min_price, discount_rate) which retains active items with price >= min_price, applies the discount_rate percentage, and rounds to 2 decimal places.",
+      "starter": "def filter_and_discount(items, min_price, discount_rate):\n    # TODO: implement logic\n    pass\n",
+      "tests": "def test_exercise(func):\n    data = [\n        {'id': 1, 'price': 100.0, 'active': True},\n        {'id': 2, 'price': 50.0, 'active': False},\n        {'id': 3, 'price': 200.0, 'active': True},\n        {'id': 4, 'price': 30.0, 'active': True}\n    ]\n    # Must filter price >= 50 and active == True\n    result = func(data, 50.0, 0.10)\n    assert len(result) == 2, f'Expected 2 items, got {len(result)}'\n    assert result[0]['id'] == 1 and result[0]['discounted_price'] == 90.0\n    assert result[1]['id'] == 3 and result[1]['discounted_price'] == 180.0\n    # Inactive item id=2 must be excluded\n    ids = [i['id'] for i in result]\n    assert 2 not in ids, 'Inactive items must be filtered out'\n    return True\n",
+      "reference": "def filter_and_discount(items, min_price, discount_rate):\n    out = []\n    for item in items:\n        if item.get('active', True) and item.get('price', 0) >= min_price:\n            discounted = round(item['price'] * (1 - discount_rate), 2)\n            new_item = dict(item)\n            new_item['discounted_price'] = discounted\n            out.append(new_item)\n    return out\n",
+      "naive": "def filter_and_discount(items, min_price, discount_rate):\n    # Naive implementation: forgets to filter active flag!\n    out = []\n    for item in items:\n        if item.get('price', 0) >= min_price:\n            new_item = dict(item)\n            new_item['discounted_price'] = item['price'] * (1 - discount_rate)\n            out.append(new_item)\n    return out\n",
+      "proof": {
+        "reference_passes": true,
+        "naive_fails": true
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q_001",
+      "question": "Which package namespace replaces javax.* in Spring Boot 3 / Spring Framework 6?",
+      "options": ["javax.enterprise.*", "jakarta.*", "org.springframework.ee.*", "io.standard.*"],
+      "answer_index": 1,
+      "explanation": "Spring Boot 3 migrated all Java EE dependencies to Jakarta EE 10, replacing javax.* packages with jakarta.*."
+    },
+    {
+      "id": "q_002",
+      "question": "How are Virtual Threads enabled in application.properties in Spring Boot 3.2+?",
+      "options": [
+        "spring.threads.virtual.enabled=true",
+        "server.loom.threads=unlimited",
+        "java.runtime.virtual-threads=on",
+        "spring.concurrency.type=virtual"
+      ],
+      "answer_index": 0,
+      "explanation": "Setting spring.threads.virtual.enabled=true instructs the embedded Tomcat container and task executors to use Virtual Threads."
+    }
+  ],
+  "cheat_sheet": "# Spring Boot 3 Quick Reference Cheat Sheet\n\n## 1. REST Controller\n```java\n@RestController\n@RequestMapping(\"/api\")\npublic class Controller {\n    @GetMapping(\"/status\")\n    public Map<String, String> status() {\n        return Map.of(\"status\", \"UP\");\n    }\n}\n```\n\n## 2. Jakarta Validation\n- `@NotNull` - Null check\n- `@NotBlank` - String must not be empty or whitespace\n- `@Positive` - Number > 0\n- `@Email` - Valid RFC email format\n\n## 3. Java 21 Records\nRecords are shallowly immutable data carriers that provide canonical constructor, equals(), hashCode(), and toString() automatically.\n"
+}
