@@ -430,7 +430,8 @@
       const diagBox = document.getElementById('slideDiagramContainer');
       if (s.diagram) {
         diagBox.classList.remove('hidden');
-        document.getElementById('diagramSource').innerText = s.diagram;
+        const diagText = typeof s.diagram === 'object' && s.diagram.source ? s.diagram.source : s.diagram;
+        document.getElementById('diagramSource').innerText = diagText;
       } else {
         diagBox.classList.add('hidden');
       }

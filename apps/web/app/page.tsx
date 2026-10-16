@@ -551,7 +551,9 @@ export default function StudioDashboard() {
                         Visual Architecture Diagram
                       </span>
                       <pre className="text-xs font-mono text-sky-300 bg-slate-950 p-3 rounded border border-slate-800">
-                        {activeSlide.diagram}
+                        {typeof activeSlide.diagram === "object" && activeSlide.diagram.source
+                          ? activeSlide.diagram.source
+                          : activeSlide.diagram}
                       </pre>
                     </div>
                   )}
