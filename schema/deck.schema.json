@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://verified-studio.local/schema/deck.schema.json",
+  "title": "Deck",
+  "description": "Single source of truth for a Verified Course Material Studio deck.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deck_id", "topic", "level", "minutes", "stack", "slides", "exercises", "quiz", "cheat_sheet"],
+  "properties": {
+    "deck_id": { "$ref": "#/$defs/id" },
+    "topic": { "type": "string", "minLength": 3, "maxLength": 200 },
+    "level": { "enum": ["beginner", "intermediate", "advanced"] },
+    "minutes": { "type": "integer", "minimum": 5, "maximum": 480 },
+    "stack": {
+      "type": "object",
+      "description": "Framework/runtime versions, e.g. {\"java\": \"21\", \"spring_boot\": \"3.3\"}.",
+      "additionalProperties": { "type": "string" }
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slide" }
+    },
+    "exercises": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/exercise" }
+    },
+    "quiz": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/quiz_item" }
+    },
+    "cheat_sheet": { "type": "string" },
+    "meta": {
+      "type": "object",
+      "description": "Optional free-form metadata (timestamps, generator info). Not rendered."
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]_[A-Za-z0-9_-]+$",
+      "description": "Stable id with a type prefix: d_ deck, s_ slide, c_ code, e_ exercise, q_ quiz, g_ diagram."
+    },
+    "verified": {
+      "enum": ["passed", "failed", "unverified"]
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title", "bullets", "code", "diagram", "notes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["title", "section", "content", "code", "diagram", "exercise", "summary"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 90 },
+        "bullets": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "code": {
+          "type": "array",
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/code_block" }
+        },
+        "diagram": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/diagram" }]
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "code_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "lang", "version", "kind", "source", "expected_output", "verified", "attempts"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "lang": { "enum": ["java", "python"] },
+        "version": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["plain", "spring-fragment"],
+          "description": "plain = self-contained program (Java class with main / Python script). spring-fragment = dropped into the template Spring Boot project."
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "expected_output": { "type": ["string", "null"] },
+        "verified": { "$ref": "#/$defs/verified" },
+        "attempts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "source"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "mermaid" },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    },
+    "exercise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "lang", "version", "prompt", "starter", "tests", "reference", "naive", "proof"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "lang": { "enum": ["java", "python"] },
+        "version": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1 },
+        "starter": { "type": "string" },
+        "tests": { "type": "string", "minLength": 1 },
+        "reference": { "type": "string", "minLength": 1 },
+        "naive": { "type": "string", "minLength": 1 },
+        "proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reference_passes", "naive_fails"],
+          "properties": {
+            "reference_passes": { "type": ["boolean", "null"] },
+            "naive_fails": { "type": ["boolean", "null"] }
+          }
+        }
+      }
+    },
+    "quiz_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question", "options", "answer_index", "explanation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "question": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "answer_index": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "explanation": { "type": "string" }
+      }
+    }
+  }
+}

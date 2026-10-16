@@ -1,0 +1,105 @@
+{
+  "deck_id": "d_sample",
+  "topic": "Spring Boot 3 REST APIs",
+  "level": "beginner",
+  "minutes": 90,
+  "stack": { "java": "21", "spring_boot": "3.3" },
+  "slides": [
+    {
+      "id": "s_001",
+      "type": "title",
+      "title": "Spring Boot 3 REST APIs",
+      "bullets": ["Build and test your first REST endpoints", "Java 21 + Spring Boot 3.3"],
+      "code": [],
+      "diagram": null,
+      "notes": "Welcome everyone. Today we go from zero to a tested REST API in 90 minutes."
+    },
+    {
+      "id": "s_002",
+      "type": "diagram",
+      "title": "How a request flows",
+      "bullets": ["Client sends HTTP request", "DispatcherServlet routes it", "Controller returns the response body"],
+      "code": [],
+      "diagram": {
+        "id": "g_001",
+        "kind": "mermaid",
+        "source": "flowchart LR\n  Client -->|GET /hello| DispatcherServlet\n  DispatcherServlet --> HelloController\n  HelloController -->|String| Client"
+      },
+      "notes": "Walk through the request lifecycle before writing any code."
+    },
+    {
+      "id": "s_003",
+      "type": "code",
+      "title": "Java 21 warm-up: records",
+      "bullets": ["Records give immutable data carriers", "Accessors and toString come for free"],
+      "code": [
+        {
+          "id": "c_001",
+          "lang": "java",
+          "version": "21",
+          "kind": "plain",
+          "source": "public class Main {\n    record Greeting(String name) {}\n\n    public static void main(String[] args) {\n        Greeting g = new Greeting(\"World\");\n        System.out.println(\"Hello, \" + g.name());\n    }\n}",
+          "expected_output": "Hello, World",
+          "verified": "unverified",
+          "attempts": 0
+        }
+      ],
+      "diagram": null,
+      "notes": "Records are what we will return from controllers later as JSON."
+    },
+    {
+      "id": "s_004",
+      "type": "code",
+      "title": "A first controller",
+      "bullets": ["Maps GET /hello", "Returns a String"],
+      "code": [
+        {
+          "id": "c_002",
+          "lang": "java",
+          "version": "21",
+          "kind": "spring-fragment",
+          "source": "@RestController\npublic class HelloController {\n\n    @GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello, Spring Boot 3\";\n    }\n}",
+          "expected_output": null,
+          "verified": "unverified",
+          "attempts": 0
+        }
+      ],
+      "diagram": null,
+      "notes": "Point out that @RestController combines @Controller and @ResponseBody."
+    },
+    {
+      "id": "s_005",
+      "type": "summary",
+      "title": "Recap",
+      "bullets": ["Records model request and response data", "@RestController exposes HTTP endpoints", "Every snippet here is sandbox-verified"],
+      "code": [],
+      "diagram": null,
+      "notes": "Hand out the cheat sheet and start the exercise."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "e_001",
+      "title": "Greeting formatter",
+      "lang": "java",
+      "version": "21",
+      "prompt": "Implement Greeter.greet(name) so it returns 'Hello, <name>!' and 'Hello, stranger!' for null or blank names.",
+      "starter": "public class Greeter {\n    public static String greet(String name) {\n        // TODO\n        return null;\n    }\n}",
+      "tests": "import org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\nclass GreeterTest {\n    @Test\n    void greetsByName() {\n        assertEquals(\"Hello, Ada!\", Greeter.greet(\"Ada\"));\n    }\n\n    @Test\n    void handlesBlank() {\n        assertEquals(\"Hello, stranger!\", Greeter.greet(\"  \"));\n        assertEquals(\"Hello, stranger!\", Greeter.greet(null));\n    }\n}",
+      "reference": "public class Greeter {\n    public static String greet(String name) {\n        if (name == null || name.isBlank()) {\n            return \"Hello, stranger!\";\n        }\n        return \"Hello, \" + name + \"!\";\n    }\n}",
+      "naive": "public class Greeter {\n    public static String greet(String name) {\n        return \"Hello, \" + name + \"!\";\n    }\n}",
+      "proof": { "reference_passes": null, "naive_fails": null }
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q_001",
+      "question": "Which annotation makes a class return response bodies directly?",
+      "options": ["@Controller", "@RestController", "@Service", "@Component"],
+      "answer_index": 1,
+      "explanation": "@RestController = @Controller + @ResponseBody."
+    }
+  ],
+  "cheat_sheet": "@RestController - class serving HTTP responses\n@GetMapping(\"/path\") - map GET requests\nrecord Name(String x) {} - immutable data carrier",
+  "meta": { "source": "hand-written sample for Phase 0" }
+}
