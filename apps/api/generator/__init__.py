@@ -638,4 +638,9 @@ CRITICAL REQUIREMENTS:
             "exercises": exercises,
             "quiz": quiz,
             "cheat_sheet": cheat_sheet,
+            "meta": {
+                "source": "deterministic-fallback",
+                "model": "none",
+                "notice": "Offline deterministic generator used (no external LLM API key configured)."
+            }
         }
