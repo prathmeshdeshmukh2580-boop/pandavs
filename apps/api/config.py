@@ -29,3 +29,7 @@ class Settings:
 
 settings = Settings()
 settings.DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+SCHEMA_PATH = settings.SCHEMA_FILE
+SAMPLES_DIR = settings.SAMPLES_DIR
+DATA_DIR = settings.DATA_DIR

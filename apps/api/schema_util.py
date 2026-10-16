@@ -6,7 +6,10 @@ from functools import lru_cache
 
 from jsonschema import Draft202012Validator
 
-import config
+try:
+    from apps.api import config
+except ImportError:
+    import config
 
 
 @lru_cache(maxsize=1)

@@ -1,197 +1,142 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DeckSchema",
-  "description": "Single source of truth schema for Verified Course Material Studio decks",
+  "$id": "https://verified-studio.local/schema/deck.schema.json",
+  "title": "Deck",
+  "description": "Single source of truth for a Verified Course Material Studio deck.",
   "type": "object",
+  "additionalProperties": false,
   "required": ["deck_id", "topic", "level", "minutes", "stack", "slides", "exercises", "quiz", "cheat_sheet"],
   "properties": {
-    "deck_id": {
-      "type": "string",
-      "description": "Unique stable identifier for the deck, e.g. d_001"
-    },
-    "topic": {
-      "type": "string",
-      "description": "Subject topic for the course deck"
-    },
-    "level": {
-      "type": "string",
-      "enum": ["beginner", "intermediate", "advanced"],
-      "description": "Target audience skill level"
-    },
-    "minutes": {
-      "type": "integer",
-      "minimum": 15,
-      "maximum": 480,
-      "description": "Estimated duration of the course presentation in minutes"
-    },
+    "deck_id": { "$ref": "#/$defs/id" },
+    "topic": { "type": "string", "minLength": 3, "maxLength": 200 },
+    "level": { "enum": ["beginner", "intermediate", "advanced"] },
+    "minutes": { "type": "integer", "minimum": 5, "maximum": 480 },
     "stack": {
       "type": "object",
-      "description": "Technologies and framework versions targeted by this deck",
-      "additionalProperties": {
-        "type": "string"
-      }
+      "description": "Framework/runtime versions, e.g. {\"java\": \"21\", \"spring_boot\": \"3.3\"}.",
+      "additionalProperties": { "type": "string" }
     },
     "slides": {
       "type": "array",
-      "description": "Ordered collection of presentation slides",
-      "items": {
-        "type": "object",
-        "required": ["id", "type", "title", "bullets", "notes"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Stable slide identifier, e.g. s_001"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["title", "overview", "code", "concept", "exercise", "summary"],
-            "description": "Type layout of the slide"
-          },
-          "title": {
-            "type": "string",
-            "description": "Title of the slide"
-          },
-          "bullets": {
-            "type": "array",
-            "maxItems": 6,
-            "items": {
-              "type": "string"
-            },
-            "description": "Key teaching bullet points (capped at ~5 items, ~12 words each)"
-          },
-          "code": {
-            "type": "array",
-            "description": "Code snippets attached to the slide (capped at ~14 lines)",
-            "items": {
-              "type": "object",
-              "required": ["id", "lang", "version", "kind", "source", "verified", "attempts"],
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Stable code snippet identifier, e.g. c_001"
-                },
-                "lang": {
-                  "type": "string",
-                  "enum": ["java", "python", "typescript", "javascript", "bash"],
-                  "description": "Programming language"
-                },
-                "version": {
-                  "type": "string",
-                  "description": "Language or runtime version, e.g. 21, 3.12"
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": ["spring-fragment", "class", "python-script", "function", "bash-script"],
-                  "description": "Structural role of code snippet in execution"
-                },
-                "source": {
-                  "type": "string",
-                  "description": "Source code text (max ~14 lines recommended)"
-                },
-                "expected_output": {
-                  "type": ["string", "null"],
-                  "description": "Optional expected standard output pattern"
-                },
-                "verified": {
-                  "type": "string",
-                  "enum": ["passed", "failed", "unverified"],
-                  "description": "Verification status: only passed snippets reach verified decks"
-                },
-                "attempts": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "Number of self-heal execution attempts needed"
-                },
-                "error_message": {
-                  "type": ["string", "null"],
-                  "description": "Compiler or runtime error message if verification failed"
-                }
-              }
-            }
-          },
-          "diagram": {
-            "type": ["string", "null"],
-            "description": "Mermaid diagram code or visual description"
-          },
-          "notes": {
-            "type": "string",
-            "description": "Trainer speaking notes for delivery"
-          }
-        }
-      }
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slide" }
     },
     "exercises": {
       "type": "array",
-      "description": "Hands-on exercises proved with unit tests",
-      "items": {
-        "type": "object",
-        "required": ["id", "starter", "tests", "reference", "naive", "proof"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Stable exercise identifier, e.g. e_001"
-          },
-          "title": {
-            "type": "string",
-            "description": "Exercise title"
-          },
-          "description": {
-            "type": "string",
-            "description": "Student instructions for the exercise"
-          },
-          "starter": {
-            "type": "string",
-            "description": "Boilerplate code handed to the student"
-          },
-          "tests": {
-            "type": "string",
-            "description": "Test suite to validate student solution"
-          },
-          "reference": {
-            "type": "string",
-            "description": "Official instructor reference solution (must pass tests)"
-          },
-          "naive": {
-            "type": "string",
-            "description": "Flawed/naive student solution (must fail tests)"
-          },
-          "proof": {
-            "type": "object",
-            "required": ["reference_passes", "naive_fails"],
-            "properties": {
-              "reference_passes": {
-                "type": "boolean",
-                "description": "Must be true (reference passes all tests)"
-              },
-              "naive_fails": {
-                "type": "boolean",
-                "description": "Must be true (tests must bite on buggy/incomplete code)"
-              }
-            }
+      "items": { "$ref": "#/$defs/exercise" }
+    },
+    "quiz": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/quiz_item" }
+    },
+    "cheat_sheet": { "type": "string" },
+    "meta": {
+      "type": "object",
+      "description": "Optional free-form metadata (timestamps, generator info). Not rendered."
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]_[A-Za-z0-9_-]+$",
+      "description": "Stable id with a type prefix: d_ deck, s_ slide, c_ code, e_ exercise, q_ quiz, g_ diagram."
+    },
+    "verified": {
+      "enum": ["passed", "failed", "unverified"]
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title", "bullets", "code", "diagram", "notes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["title", "section", "content", "code", "diagram", "exercise", "summary"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 90 },
+        "bullets": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "code": {
+          "type": "array",
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/code_block" }
+        },
+        "diagram": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/diagram" }]
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "code_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "lang", "version", "kind", "source", "expected_output", "verified", "attempts"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "lang": { "enum": ["java", "python"] },
+        "version": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["plain", "spring-fragment"],
+          "description": "plain = self-contained program (Java class with main / Python script). spring-fragment = dropped into the template Spring Boot project."
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "expected_output": { "type": ["string", "null"] },
+        "verified": { "$ref": "#/$defs/verified" },
+        "attempts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "source"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "mermaid" },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    },
+    "exercise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "lang", "version", "prompt", "starter", "tests", "reference", "naive", "proof"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "lang": { "enum": ["java", "python"] },
+        "version": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1 },
+        "starter": { "type": "string" },
+        "tests": { "type": "string", "minLength": 1 },
+        "reference": { "type": "string", "minLength": 1 },
+        "naive": { "type": "string", "minLength": 1 },
+        "proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reference_passes", "naive_fails"],
+          "properties": {
+            "reference_passes": { "type": ["boolean", "null"] },
+            "naive_fails": { "type": ["boolean", "null"] }
           }
         }
       }
     },
-    "quiz": {
-      "type": "array",
-      "description": "Assessment questions for knowledge checks",
-      "items": {
-        "type": "object",
-        "required": ["question", "options", "answer", "explanation"],
-        "properties": {
-          "question": {"type": "string"},
-          "options": {
-            "type": "array",
-            "items": {"type": "string"}
-          },
-          "answer": {"type": "integer"},
-          "explanation": {"type": "string"}
-        }
+    "quiz_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question", "options", "answer_index", "explanation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "question": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "answer_index": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "explanation": { "type": "string" }
       }
-    },
-    "cheat_sheet": {
-      "type": "string",
-      "description": "Markdown formatted quick reference summary sheet"
     }
   }
 }
