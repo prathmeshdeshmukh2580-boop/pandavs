@@ -1,10 +1,14 @@
 # Verified Course Material Studio
 
+_Team **pandavs**: not a single weak character._
+
 Generates training decks (slides, exercises, quiz, cheat sheet) where **every code snippet is run in a Docker sandbox before it reaches you**. Nothing ships unverified.
 
 ```
 Planner -> Generator -> Verifier (Docker sandbox) -> Renderer
 ```
+
+![Architecture](verified_course_studio_architecture.png)
 
 > Status: prototype, built phase by phase from [`guide1.md`](guide1.md). Currently at **Phase 0 (skeleton)**.
 
