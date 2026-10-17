@@ -9,7 +9,8 @@ except ImportError:
     import config
     from schema_util import deck_errors, deck_validator
 
-SAMPLES = sorted(config.SAMPLES_DIR.glob("*.json"))
+# Only pick up files that are actual decks; exclude reports, etc.
+SAMPLES = sorted(p for p in config.SAMPLES_DIR.glob("*.json") if "deck" in p.name)
 
 
 def test_schema_is_valid_json_schema():

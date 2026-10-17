@@ -141,6 +141,9 @@ class Orchestrator:
                             "error": heal_res.get("error_message")
                         })
 
+                    # Clean up internal verification metadata not allowed by deck.schema.json
+                    block.pop("error_message", None)
+
             # Exercise Prover ("Tests Must Bite")
             proven_exercises = []
             for ex in deck.get("exercises", []):

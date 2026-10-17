@@ -28,24 +28,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: apps/web/package-lock.json
-      - name: Install and build Next.js
-        run: |
-          cd apps/web && npm ci && npm run build
+          # No cache: npm lock file is not committed; install fresh
+      - name: Install dependencies
+        run: cd apps/web && npm install
+      - name: Build Next.js
+        run: cd apps/web && npm run build
 
   schema:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install jsonschema
+        run: pip install jsonschema
       - name: Validate sample decks against schema
         run: |
           python -c "
           import json, jsonschema
           with open('schema/deck.schema.json') as sf:
               schema = json.load(sf)
-          with open('samples/spring_boot_deck.json') as df:
-              deck = json.load(df)
-          jsonschema.validate(instance=deck, schema=schema)
-          print('Schema validation passed')
+          # Only validate files that are actual decks (not reports)
+          import pathlib
+          deck_files = [p for p in pathlib.Path('samples').glob('*.json') if 'deck' in p.name]
+          for path in deck_files:
+              deck = json.loads(path.read_text(encoding='utf-8'))
+              jsonschema.validate(instance=deck, schema=schema)
+              print('Schema validation passed:', path.name)
           "

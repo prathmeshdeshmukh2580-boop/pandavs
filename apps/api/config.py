@@ -16,9 +16,9 @@ class Settings:
 
     # Secondary fallback: Anthropic Claude
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    CLAUDE_MODEL: str      = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
-
-    # ── Sandbox ──────────────────────────────────────────────────────────────────
+    CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
+    
+    # Sandbox Settings
     SANDBOX_TIMEOUT_SEC: int = int(os.getenv("SANDBOX_TIMEOUT_SEC", "30"))
     SANDBOX_MEMORY_MB: int   = int(os.getenv("SANDBOX_MEMORY_MB", "512"))
     MAX_FIX_ATTEMPTS: int    = int(os.getenv("MAX_FIX_ATTEMPTS", "3"))

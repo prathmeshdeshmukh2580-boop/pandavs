@@ -648,6 +648,7 @@
       const rawBox = document.getElementById('diagramRawBox');
       if (s.diagram && s.diagram.trim().length > 0) {
         diagBox.classList.remove('hidden');
+<<<<<<< HEAD
         rawBox.innerText = s.diagram;
         mermaidBox.innerHTML = '';
         try {
@@ -660,6 +661,10 @@
         } catch (e) {
           mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${s.diagram}</pre>`;
         }
+=======
+        const diagText = typeof s.diagram === 'object' && s.diagram.source ? s.diagram.source : s.diagram;
+        document.getElementById('diagramSource').innerText = diagText;
+>>>>>>> origin/main
       } else {
         diagBox.classList.add('hidden');
       }
