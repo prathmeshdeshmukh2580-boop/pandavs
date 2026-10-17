@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verified Course Material Studio</title>
+  <title>Verified Course Material Studio — AI Zero-Trust Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { darkMode: true, background: '#0f172a' } });
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -21,17 +23,19 @@
               accent: '#6366f1',
               emerald: '#10b981',
               amber: '#f59e0b',
+              purple: '#a855f7',
             }
           }
         }
       }
-    }
+    };
   </script>
   <style>
     body { background-color: #030712; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; margin: 0 auto; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -44,19 +48,20 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-lg font-bold tracking-tight text-white">Verified Course Material Studio</h1>
-          <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">Zero-Trust Pipeline</span>
+          <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium">Gemini 3.8 Flash AI</span>
+          <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">Zero-Trust Sandbox</span>
         </div>
-        <p class="text-xs text-slate-400">Nothing reaches the trainer unverified: Sandbox execution on every snippet</p>
+        <p class="text-xs text-slate-400">Masterclass-grade slides, verified code & dual-prover exercises for any topic & student level</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
       <button onclick="loadDeck('d_001')" class="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition">
         <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-        Load Demo Deck (d_001)
+        Demo Deck
       </button>
       <button onclick="openReportModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition">
         <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
-        Audit Report
+        Audit Telemetry
       </button>
       <a id="exportBtn" href="/decks/d_001/export?format=pptx" download class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-md transition">
         <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -66,27 +71,47 @@
   </header>
 
   <!-- Main Container -->
-  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1600px] mx-auto w-full">
-    <!-- Left Column: Generator Form & Pipeline Progress -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1680px] mx-auto w-full">
+    <!-- Left Column: Generator Form & Real-time Progress -->
     <div class="lg:col-span-4 flex flex-col gap-6">
       <!-- Course Generator Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div class="flex items-center gap-2 mb-4">
-          <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
-          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Course Generator</h2>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-200">AI Course Architect</h2>
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono">Any Topic · Any Level</span>
         </div>
+
+        <!-- Quick Topic Chips -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Popular Topic Presets (1-Click Fill)</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="setPreset('Rust Memory Safety & Concurrency', 'advanced', 'rust')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🦀 Rust Safety</button>
+            <button type="button" onclick="setPreset('React 19 & Next.js App Router Architecture', 'intermediate', 'typescript')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">⚛️ React 19</button>
+            <button type="button" onclick="setPreset('Spring Boot 3 REST APIs & Microservices', 'intermediate', 'java')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🍃 Spring Boot 3</button>
+            <button type="button" onclick="setPreset('FastAPI Asynchronous Microservices & Telemetry', 'intermediate', 'python')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🐍 FastAPI Async</button>
+            <button type="button" onclick="setPreset('Docker & Kubernetes Container Orchestration', 'intermediate', 'auto')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🐳 Docker / K8s</button>
+            <button type="button" onclick="setPreset('PostgreSQL Indexing & High-Performance Query Tuning', 'advanced', 'sql')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🗄️ Postgres Tuning</button>
+            <button type="button" onclick="setPreset('Deep Learning: Transformer Architecture & Attention', 'advanced', 'python')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🧠 Transformers</button>
+            <button type="button" onclick="setPreset('Python Fundamentals & Core Data Structures', 'beginner', 'python')" class="text-[11px] bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 px-2 py-1 rounded transition">🌱 Python 101</button>
+          </div>
+        </div>
+
         <form id="genForm" onsubmit="handleGenerate(event)" class="space-y-4">
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1">Course Topic</label>
-            <input type="text" id="topicInput" value="Spring Boot 3 REST APIs & Architecture" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required>
+            <input type="text" id="topicInput" value="Spring Boot 3 REST APIs & Microservices" placeholder="e.g. Go Concurrency, React Hooks, System Design..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" required>
           </div>
+
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Audience Level</label>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Student Level</label>
               <select id="levelInput" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
+                <option value="beginner">🌱 Beginner (Mental models & analogies)</option>
+                <option value="intermediate" selected>⚡ Intermediate (Production patterns)</option>
+                <option value="advanced">🔥 Advanced (Internals & resilience)</option>
               </select>
             </div>
             <div>
@@ -94,22 +119,50 @@
               <input type="number" id="minutesInput" value="90" min="15" max="240" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
             </div>
           </div>
+
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Target Architecture Stack</label>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" id="stackJavaBtn" onclick="selectStack('java')" class="py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition">
-                <span class="font-semibold">Java 21</span>
-                <span class="text-[10px] text-slate-400">Spring Boot 3.3</span>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Target Language / Technology Stack</label>
+            <div class="grid grid-cols-4 gap-1.5 text-xs">
+              <button type="button" id="stack-auto" onclick="selectStack('auto')" class="p-2 rounded border border-indigo-500 bg-indigo-500/15 text-white font-medium text-center transition">
+                <span class="block font-semibold">✨ Auto</span>
+                <span class="text-[9px] text-slate-400">AI Inferred</span>
               </button>
-              <button type="button" id="stackPyBtn" onclick="selectStack('python')" class="py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition">
-                <span class="font-semibold">Python 3.12</span>
-                <span class="text-[10px] text-slate-400">FastAPI & AsyncIO</span>
+              <button type="button" id="stack-python" onclick="selectStack('python')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">Python</span>
+                <span class="text-[9px] text-slate-500">3.12 / Async</span>
+              </button>
+              <button type="button" id="stack-java" onclick="selectStack('java')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">Java</span>
+                <span class="text-[9px] text-slate-500">21 / Spring 3</span>
+              </button>
+              <button type="button" id="stack-typescript" onclick="selectStack('typescript')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">TypeScript</span>
+                <span class="text-[9px] text-slate-500">Node / React</span>
+              </button>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5 text-xs mt-1.5">
+              <button type="button" id="stack-rust" onclick="selectStack('rust')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">Rust</span>
+                <span class="text-[9px] text-slate-500">1.75 Cargo</span>
+              </button>
+              <button type="button" id="stack-go" onclick="selectStack('go')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">Go</span>
+                <span class="text-[9px] text-slate-500">1.22 Modules</span>
+              </button>
+              <button type="button" id="stack-cpp" onclick="selectStack('cpp')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">C++</span>
+                <span class="text-[9px] text-slate-500">C++20 ISO</span>
+              </button>
+              <button type="button" id="stack-sql" onclick="selectStack('sql')" class="p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition">
+                <span class="block font-semibold">SQL</span>
+                <span class="text-[9px] text-slate-500">Postgres 16</span>
               </button>
             </div>
           </div>
+
           <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition text-sm">
             <i data-lucide="play" class="w-4 h-4"></i>
-            <span>Generate Verified Deck</span>
+            <span>Generate Verified Deck with Gemini 3.8</span>
           </button>
         </form>
       </div>
@@ -119,12 +172,12 @@
         <div class="flex items-center justify-between">
           <span class="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
             <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
-            Verification Pipeline (SSE)
+            Zero-Trust Verification Pipeline (SSE)
           </span>
           <span id="progressPct" class="text-xs font-bold text-indigo-400">100%</span>
         </div>
         <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-          <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
+          <div id="progressBar" class="bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 h-full transition-all duration-300" style="width: 100%;"></div>
         </div>
         <div class="grid grid-cols-4 gap-1 text-[11px] text-center">
           <div id="pill-planner" class="py-1 rounded bg-slate-800 text-white font-semibold">Planner</div>
@@ -134,7 +187,7 @@
         </div>
         <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 flex items-start gap-2">
           <i data-lucide="terminal" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
-          <span id="pipelineStatusText">Ready. All 7 slides verified and cached.</span>
+          <span id="pipelineStatusText">Ready. All slides verified and ready for classroom presentation.</span>
         </div>
       </div>
 
@@ -143,27 +196,54 @@
         <div class="flex items-center justify-between mb-3 px-1">
           <span class="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
             <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-            Deck Slides (<span id="slideCount">7</span>)
+            Deck Slides (<span id="slideCount">10</span>)
           </span>
-          <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">100% Verified</span>
+          <span id="verifiedRateBadge" class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">100% Verified</span>
         </div>
-        <div id="slideList" class="space-y-1.5 overflow-y-auto max-h-[360px] pr-1"></div>
+        <div id="slideList" class="space-y-1.5 overflow-y-auto max-h-[380px] pr-1"></div>
       </div>
     </div>
 
-    <!-- Right Column: Slide Presentation Stage & Verification Details -->
-    <div class="lg:col-span-8 flex flex-col gap-6">
-      <!-- Active Slide Stage -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
-        <div class="bg-slate-950/80 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between">
+    <!-- Right Column: Interactive Deck Hub & Viewer Stage -->
+    <div class="lg:col-span-8 flex flex-col gap-5">
+      <!-- Hub View Tabs -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-1.5 flex items-center justify-between">
+        <div class="flex items-center gap-1">
+          <button id="tab-slides" onclick="switchTab('slides')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition bg-indigo-600 text-white">
+            <i data-lucide="presentation" class="w-3.5 h-3.5"></i>
+            <span>Interactive Slide Stage</span>
+          </button>
+          <button id="tab-quiz" onclick="switchTab('quiz')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-800">
+            <i data-lucide="help-circle" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Knowledge Check Quiz</span>
+            <span id="quizCountBadge" class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded-full font-mono">3</span>
+          </button>
+          <button id="tab-lab" onclick="switchTab('lab')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-800">
+            <i data-lucide="terminal-square" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Hands-on Lab Exercise</span>
+          </button>
+          <button id="tab-cheat" onclick="switchTab('cheat')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-800">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>Cheat Sheet Reference</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2 pr-2">
+          <span id="levelPill" class="text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-300">INTERMEDIATE</span>
+        </div>
+      </div>
+
+      <!-- Tab 1: Slide Presentation Stage -->
+      <div id="view-slides" class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
+        <!-- Stage Topbar -->
+        <div class="bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <span id="slideBadge" class="text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">Slide 1 (s_001)</span>
+            <span id="slideBadge" class="text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">Slide 1 of 10 (s_001)</span>
             <span id="slideTypeBadge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded uppercase font-semibold">TITLE</span>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="regenerateActiveSlide()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition">
-              <i data-lucide="rotate-cw" class="w-3.5 h-3.5 text-indigo-400"></i>
-              Regenerate Slide
+            <button onclick="openRegenModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
+              Regenerate with AI Hint
             </button>
             <button onclick="openUpgradeModal()" class="text-xs bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition">
               <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
@@ -172,31 +252,58 @@
           </div>
         </div>
 
-        <!-- Slide Content Canvas -->
-        <div class="p-8 bg-slate-950/40 min-h-[460px] flex flex-col justify-between border-b border-slate-800">
+        <!-- Slide Canvas -->
+        <div class="p-8 bg-slate-950/40 min-h-[500px] flex flex-col justify-between border-b border-slate-800">
           <div>
             <h2 id="slideTitle" class="text-2xl font-bold tracking-tight text-white mb-6">Spring Boot 3 REST APIs</h2>
+            
+            <!-- Bullets -->
             <ul id="slideBullets" class="space-y-3 mb-6"></ul>
+
+            <!-- Code Container -->
             <div id="slideCodeContainer" class="hidden rounded-lg border border-slate-800 bg-slate-950 overflow-hidden mt-4">
               <div class="bg-slate-900/90 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-xs font-mono text-slate-400">
                   <i data-lucide="code-2" class="w-4 h-4 text-indigo-400"></i>
-                  <span id="codeLangKind">java (21) · spring-fragment</span>
+                  <span id="codeLangKind">python (latest) · implementation</span>
                 </div>
                 <div class="flex items-center gap-2">
+                  <button onclick="copyCode()" class="text-[11px] text-slate-400 hover:text-white px-2 py-0.5 bg-slate-800 rounded flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                  </button>
                   <span id="codeVerifiedBadge" class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold">
                     <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
-                    VERIFIED PASSED (1 att)
+                    VERIFIED PASSED
                   </span>
                 </div>
               </div>
               <pre class="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed"><code id="codeSource"></code></pre>
             </div>
-            <div id="slideDiagramContainer" class="hidden mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider block mb-2">Visual Architecture Flow</span>
-              <pre id="diagramSource" class="text-xs font-mono text-sky-300 bg-slate-950 p-3 rounded border border-slate-800"></pre>
+
+            <!-- Diagram Container with SVG Rendering -->
+            <div id="slideDiagramContainer" class="hidden mt-5 p-5 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  Architectural Visual Flow
+                </span>
+                <button onclick="toggleDiagramRaw()" class="text-[11px] text-slate-400 hover:text-white underline">Toggle Source</button>
+              </div>
+              <div id="mermaidRenderBox" class="mermaid bg-slate-950/70 p-4 rounded border border-slate-800 overflow-x-auto text-center"></div>
+              <pre id="diagramRawBox" class="hidden text-xs font-mono text-sky-300 bg-slate-950 p-3 rounded border border-slate-800 overflow-x-auto mt-2"></pre>
+            </div>
+
+            <!-- Pro-Tip Callout Card -->
+            <div id="slideProTipCard" class="hidden mt-6 p-3.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-start gap-3">
+              <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-xs font-semibold text-indigo-300">Actionable Production Insight:</strong>
+                <p id="slideProTipText" class="text-xs text-slate-200 mt-0.5"></p>
+              </div>
             </div>
           </div>
+
+          <!-- Trainer Delivery Notes -->
           <div id="slideNotesContainer" class="mt-6 pt-4 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-400 bg-slate-900/40 p-3 rounded-lg">
             <i data-lucide="book-open" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
             <div>
@@ -206,43 +313,121 @@
           </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Stage Pagination Controls -->
         <div class="bg-slate-950 px-6 py-3 flex items-center justify-between">
-          <button id="prevBtn" onclick="changeSlide(-1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30">← Previous Slide</button>
-          <span id="pageIndicator" class="text-xs text-slate-500 font-mono">1 / 7</span>
-          <button id="nextBtn" onclick="changeSlide(1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30">Next Slide →</button>
+          <button id="prevBtn" onclick="changeSlide(-1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30 flex items-center gap-1">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Previous Slide
+          </button>
+          <span id="pageIndicator" class="text-xs text-slate-400 font-mono">1 / 10</span>
+          <button id="nextBtn" onclick="changeSlide(1)" class="text-xs text-slate-400 hover:text-white transition disabled:opacity-30 flex items-center gap-1">
+            Next Slide <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Exercises Prover Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
-        <div class="flex items-center justify-between">
+      <!-- Tab 2: Interactive Quiz View -->
+      <div id="view-quiz" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
           <div class="flex items-center gap-2">
-            <i data-lucide="shield-check" class="w-5 h-5 text-indigo-400"></i>
-            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Dual-Prover Exercise Verification ("Tests Must Bite")</h3>
+            <i data-lucide="help-circle" class="w-5 h-5 text-amber-400"></i>
+            <h3 class="text-base font-bold text-white">Interactive Knowledge Check</h3>
           </div>
-          <span class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-semibold">Contract: Proven</span>
+          <span class="text-xs text-slate-400">Test your mastery of core invariants and edge cases</span>
         </div>
-        <p id="exDesc" class="text-xs text-slate-400">Implement filtering function according to the exercise specification.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div class="bg-slate-950 p-3 rounded-lg border border-emerald-900/40">
-            <div class="flex items-center justify-between text-emerald-400 font-semibold mb-1">
-              <span>1. Reference Solution</span>
-              <span>✓ Passes All Tests</span>
-            </div>
-            <p class="text-slate-400 text-[11px]">Official instructor reference code executes cleanly in sandbox with exit code 0.</p>
+        <div id="quizListContainer" class="space-y-6"></div>
+      </div>
+
+      <!-- Tab 3: Hands-on Lab View -->
+      <div id="view-lab" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="terminal-square" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-base font-bold text-white">Hands-on Lab & Dual-Prover Verification</h3>
           </div>
-          <div class="bg-slate-950 p-3 rounded-lg border border-red-900/40">
-            <div class="flex items-center justify-between text-red-400 font-semibold mb-1">
-              <span>2. Naive Buggy Solution</span>
-              <span>✓ Caught & Fails Tests</span>
+          <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-semibold">Dual-Prover Contract: Proven</span>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <h4 id="labTitle" class="text-sm font-bold text-white">Lab Challenge</h4>
+            <p id="labDesc" class="text-xs text-slate-300 mt-1 leading-relaxed"></p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2">
+              <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-indigo-400"></i> Starter Code (For Students)
+              </span>
+              <pre class="p-3 bg-slate-900 rounded border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto max-h-[220px]"><code id="labStarter"></code></pre>
             </div>
-            <p class="text-slate-400 text-[11px]">Flawed code missing active condition is caught by test assertion error.</p>
+            <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2">
+              <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="check-square" class="w-3.5 h-3.5 text-emerald-400"></i> Test Suite (Automated Assertion Contract)
+              </span>
+              <pre class="p-3 bg-slate-900 rounded border border-slate-800 text-xs font-mono text-emerald-300 overflow-x-auto max-h-[220px]"><code id="labTests"></code></pre>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-950 p-3 rounded-lg border border-emerald-900/40">
+              <div class="flex items-center justify-between text-emerald-400 font-semibold mb-1">
+                <span>1. Official Instructor Reference</span>
+                <span>✓ Passes Sandbox (Exit 0)</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">Correctly satisfies all boundary invariants and test cases without errors.</p>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-lg border border-red-900/40">
+              <div class="flex items-center justify-between text-red-400 font-semibold mb-1">
+                <span>2. Naive Buggy Attempt</span>
+                <span>✓ Fails Test Assertion ("Bites")</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">Guarantees the test suite catches subtle rookie logic flaws and edge case regressions.</p>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Tab 4: Markdown Cheat Sheet View -->
+      <div id="view-cheat" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-text" class="w-5 h-5 text-sky-400"></i>
+            <h3 class="text-base font-bold text-white">Comprehensive Cheat Sheet Reference</h3>
+          </div>
+          <button onclick="copyCheatSheet()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Markdown
+          </button>
+        </div>
+        <pre id="cheatSheetContent" class="p-5 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[600px]"></pre>
+      </div>
     </div>
   </main>
+
+  <!-- Slide AI Regeneration Modal -->
+  <div id="regenModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400"></i>
+          AI Slide Regeneration with Prompt Hint
+        </h3>
+        <button onclick="closeRegenModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-xs text-slate-400">Enter custom pedagogical instructions for Gemini to rewrite, deepen, and re-verify this active slide.</p>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Instruction / Hint</label>
+        <textarea id="regenHintInput" rows="3" placeholder="e.g. Add defensive error boundary handling and explain why HTTP 422 is preferred over 400..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        <button type="button" onclick="setRegenHint('Add realistic error handling and input sanitization')" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded hover:bg-slate-700">+ Error Handling</button>
+        <button type="button" onclick="setRegenHint('Explain memory trade-offs and runtime latency')" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded hover:bg-slate-700">+ Memory Profile</button>
+        <button type="button" onclick="setRegenHint('Simplify explanation with beginner-friendly analogies')" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded hover:bg-slate-700">+ Beginner Analogy</button>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeRegenModal()" class="text-xs bg-slate-800 text-slate-300 px-3 py-2 rounded">Cancel</button>
+        <button onclick="submitSlideRegeneration()" id="submitRegenBtn" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded flex items-center gap-1.5">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Regenerate & Re-verify
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Audit Report Modal -->
   <div id="reportModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -306,11 +491,11 @@
         <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
         Framework Upgrade & Re-Verification
       </h3>
-      <p class="text-xs text-slate-400">Upgrades presentation code from legacy framework conventions (e.g. Spring Boot 2.7 javax.*) to Spring Boot 3.3 (jakarta.*) with automatic sandbox verification.</p>
+      <p class="text-xs text-slate-400">Upgrades presentation code from legacy conventions to modern standards with automatic sandbox re-verification.</p>
       <div id="upgradeResultBox" class="hidden bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2 text-xs">
         <div class="text-emerald-400 font-semibold">✓ Upgrade Completed</div>
         <div id="upgradeChangeCount">Modified Snippets: 2</div>
-        <div class="text-slate-400 text-[11px]">All javax.* namespaces replaced with jakarta.* and verified in sandbox.</div>
+        <div class="text-slate-400 text-[11px]">All namespaces upgraded and verified in sandbox.</div>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button onclick="closeUpgradeModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded transition">Cancel</button>
@@ -323,19 +508,43 @@
     let currentDeck = null;
     let activeIndex = 0;
     let currentReport = null;
-    let selectedStack = 'java';
+    let selectedStack = 'auto';
+    let currentTab = 'slides';
+
+    function setPreset(topic, level, stack) {
+      document.getElementById('topicInput').value = topic;
+      document.getElementById('levelInput').value = level;
+      selectStack(stack);
+    }
 
     function selectStack(type) {
       selectedStack = type;
-      const jBtn = document.getElementById('stackJavaBtn');
-      const pBtn = document.getElementById('stackPyBtn');
-      if (type === 'java') {
-        jBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition";
-        pBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition";
-      } else {
-        pBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-indigo-500 bg-indigo-500/10 text-white font-medium transition";
-        jBtn.className = "py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 transition";
-      }
+      const stacks = ['auto', 'python', 'java', 'typescript', 'rust', 'go', 'cpp', 'sql'];
+      stacks.forEach(s => {
+        const btn = document.getElementById(`stack-${s}`);
+        if (!btn) return;
+        if (s === type) {
+          btn.className = "p-2 rounded border border-indigo-500 bg-indigo-500/15 text-white font-medium text-center transition";
+        } else {
+          btn.className = "p-2 rounded border border-slate-800 bg-slate-950 text-slate-400 text-center hover:border-slate-700 transition";
+        }
+      });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      ['slides', 'quiz', 'lab', 'cheat'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const view = document.getElementById(`view-${t}`);
+        if (t === tab) {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition bg-indigo-600 text-white shadow";
+          view.classList.remove('hidden');
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition text-slate-400 hover:text-white hover:bg-slate-800";
+          view.classList.add('hidden');
+        }
+      });
+      lucide.createIcons();
     }
 
     async function loadDeck(deckId) {
@@ -349,6 +558,7 @@
         const repRes = await fetch(`/decks/${deckId}/report`);
         if (repRes.ok) {
           currentReport = await repRes.json();
+          document.getElementById('verifiedRateBadge').innerText = `${currentReport.verification_rate_pct || 100}% Verified`;
         }
         document.getElementById('exportBtn').href = `/decks/${deckId}/export?format=pptx`;
         document.getElementById('fullHtmlReportLink').href = `/decks/${deckId}/report?format=html`;
@@ -360,6 +570,7 @@
     function renderDeck() {
       if (!currentDeck) return;
       document.getElementById('slideCount').innerText = currentDeck.slides.length;
+      document.getElementById('levelPill').innerText = (currentDeck.level || 'intermediate').toUpperCase();
       
       // Render slide list
       const listEl = document.getElementById('slideList');
@@ -370,7 +581,7 @@
         const isActive = idx === activeIndex;
 
         const btn = document.createElement('button');
-        btn.onclick = () => { activeIndex = idx; renderActiveSlide(); };
+        btn.onclick = () => { activeIndex = idx; switchTab('slides'); renderActiveSlide(); };
         btn.className = `w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
           isActive ? 'border-indigo-500 bg-indigo-500/10 text-white font-medium' : 'border-slate-800/80 bg-slate-950/60 hover:bg-slate-800/50 text-slate-300'
         }`;
@@ -388,6 +599,9 @@
       });
 
       renderActiveSlide();
+      renderQuizTab();
+      renderLabTab();
+      renderCheatSheetTab();
     }
 
     function renderActiveSlide() {
@@ -404,8 +618,10 @@
       if (s.bullets && s.bullets.length > 0) {
         s.bullets.forEach(b => {
           const li = document.createElement('li');
-          li.className = "flex items-start gap-3 text-sm text-slate-200";
-          li.innerHTML = `<span class="text-indigo-400 mt-1">✦</span><span>${b}</span>`;
+          li.className = "flex items-start gap-3 text-sm text-slate-200 leading-relaxed";
+          // If bullet has bold markdown **Text**, format it cleanly
+          let cleanText = b.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+          li.innerHTML = `<span class="text-indigo-400 mt-0.5">✦</span><span>${cleanText}</span>`;
           bulletsEl.appendChild(li);
         });
       }
@@ -415,24 +631,46 @@
       if (s.code && s.code.length > 0) {
         codeBox.classList.remove('hidden');
         const c = s.code[0];
-        document.getElementById('codeLangKind').innerText = `${c.lang} (${c.version}) · ${c.kind}`;
+        document.getElementById('codeLangKind').innerText = `${c.lang} (${c.version || 'latest'}) · ${c.kind || 'implementation'}`;
         document.getElementById('codeSource').innerText = c.source;
         const isPassed = c.verified === 'passed';
         document.getElementById('codeVerifiedBadge').innerHTML = isPassed
-          ? `<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> VERIFIED PASSED (${c.attempts || 1} att)`
+          ? `<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> VERIFIED PASSED`
           : `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> UNVERIFIED`;
         document.getElementById('codeVerifiedBadge').className = `text-xs ${isPassed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'} px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold`;
       } else {
         codeBox.classList.add('hidden');
       }
 
-      // Diagram container
+      // Diagram container with Mermaid rendering
       const diagBox = document.getElementById('slideDiagramContainer');
-      if (s.diagram) {
+      const mermaidBox = document.getElementById('mermaidRenderBox');
+      const rawBox = document.getElementById('diagramRawBox');
+      if (s.diagram && s.diagram.trim().length > 0) {
         diagBox.classList.remove('hidden');
-        document.getElementById('diagramSource').innerText = s.diagram;
+        rawBox.innerText = s.diagram;
+        mermaidBox.innerHTML = '';
+        try {
+          const id = 'mermaid_' + Math.random().toString(36).substring(7);
+          mermaid.render(id, s.diagram).then(({ svg }) => {
+            mermaidBox.innerHTML = svg;
+          }).catch(err => {
+            mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${s.diagram}</pre>`;
+          });
+        } catch (e) {
+          mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${s.diagram}</pre>`;
+        }
       } else {
         diagBox.classList.add('hidden');
+      }
+
+      // Pro-Tip Card
+      const proTipCard = document.getElementById('slideProTipCard');
+      if (s.pro_tip) {
+        proTipCard.classList.remove('hidden');
+        document.getElementById('slideProTipText').innerText = s.pro_tip;
+      } else {
+        proTipCard.classList.add('hidden');
       }
 
       // Notes
@@ -444,6 +682,105 @@
       document.getElementById('pageIndicator').innerText = `${activeIndex + 1} / ${currentDeck.slides.length}`;
 
       lucide.createIcons();
+    }
+
+    function toggleDiagramRaw() {
+      const raw = document.getElementById('diagramRawBox');
+      raw.classList.toggle('hidden');
+    }
+
+    function copyCode() {
+      if (!currentDeck || !currentDeck.slides[activeIndex]) return;
+      const s = currentDeck.slides[activeIndex];
+      if (s.code && s.code.length > 0) {
+        navigator.clipboard.writeText(s.code[0].source);
+        alert('Code copied to clipboard!');
+      }
+    }
+
+    function renderQuizTab() {
+      const container = document.getElementById('quizListContainer');
+      const quiz = currentDeck ? currentDeck.quiz || [] : [];
+      document.getElementById('quizCountBadge').innerText = quiz.length;
+      container.innerHTML = '';
+
+      if (quiz.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400">No quiz questions generated for this deck.</p>`;
+        return;
+      }
+
+      quiz.forEach((q, qIdx) => {
+        const card = document.createElement('div');
+        card.className = "p-5 rounded-lg bg-slate-950 border border-slate-800 space-y-3";
+        
+        let optionsHtml = '';
+        const letters = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, optIdx) => {
+          optionsHtml += `
+            <button onclick="checkAnswer(${qIdx}, ${optIdx}, ${q.answer})" id="q_${qIdx}_opt_${optIdx}" class="w-full text-left p-3 rounded border border-slate-800 hover:border-slate-700 bg-slate-900/60 text-xs text-slate-200 transition flex items-center justify-between">
+              <span><strong>${letters[optIdx]}.</strong> ${opt}</span>
+              <span id="q_${qIdx}_badge_${optIdx}" class="text-[11px] font-semibold"></span>
+            </button>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">${qIdx + 1}</span>
+            <p class="text-sm font-semibold text-white">${q.question}</p>
+          </div>
+          <div class="space-y-2 mt-2">${optionsHtml}</div>
+          <div id="q_${qIdx}_explanation" class="hidden mt-3 p-3 rounded bg-indigo-500/10 border border-indigo-500/30 text-xs text-slate-300">
+            <strong class="text-indigo-300">Explanation:</strong> ${q.explanation}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function checkAnswer(qIdx, selected, correct) {
+      const exp = document.getElementById(`q_${qIdx}_explanation`);
+      exp.classList.remove('hidden');
+
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`q_${qIdx}_opt_${i}`);
+        const badge = document.getElementById(`q_${qIdx}_badge_${i}`);
+        if (!btn) continue;
+
+        if (i === correct) {
+          btn.className = "w-full text-left p-3 rounded border border-emerald-500/50 bg-emerald-500/15 text-xs text-emerald-300 font-semibold transition flex items-center justify-between";
+          badge.innerText = "✓ Correct";
+          badge.className = "text-[11px] text-emerald-400 font-bold";
+        } else if (i === selected && selected !== correct) {
+          btn.className = "w-full text-left p-3 rounded border border-red-500/50 bg-red-500/15 text-xs text-red-300 transition flex items-center justify-between";
+          badge.innerText = "✕ Incorrect";
+          badge.className = "text-[11px] text-red-400 font-bold";
+        } else {
+          btn.className = "w-full text-left p-3 rounded border border-slate-800 bg-slate-900/30 text-xs text-slate-500 opacity-60 flex items-center justify-between";
+          badge.innerText = "";
+        }
+      }
+    }
+
+    function renderLabTab() {
+      if (!currentDeck) return;
+      const ex = (currentDeck.exercises && currentDeck.exercises[0]) || {};
+      document.getElementById('labTitle').innerText = ex.title || "Core Implementation Exercise";
+      document.getElementById('labDesc').innerText = ex.description || "Implement domain rules according to requirements.";
+      document.getElementById('labStarter').innerText = ex.starter || "# Student starter";
+      document.getElementById('labTests').innerText = ex.tests || "# Test assertions";
+    }
+
+    function renderCheatSheetTab() {
+      if (!currentDeck) return;
+      const sheet = currentDeck.cheat_sheet || "# Quick Reference\n\nNo cheat sheet generated.";
+      document.getElementById('cheatSheetContent').innerText = sheet;
+    }
+
+    function copyCheatSheet() {
+      if (!currentDeck || !currentDeck.cheat_sheet) return;
+      navigator.clipboard.writeText(currentDeck.cheat_sheet);
+      alert('Cheat sheet copied to clipboard!');
     }
 
     function changeSlide(delta) {
@@ -460,11 +797,20 @@
       const topic = document.getElementById('topicInput').value;
       const level = document.getElementById('levelInput').value;
       const minutes = parseInt(document.getElementById('minutesInput').value);
-      const stack = selectedStack === 'java' ? { java: "21", spring_boot: "3.3" } : { python: "3.12", framework: "fastapi" };
+      
+      let stack = {};
+      if (selectedStack === 'java') stack = { java: "21", spring_boot: "3.3" };
+      else if (selectedStack === 'python') stack = { python: "3.12", runtime: "fastapi" };
+      else if (selectedStack === 'typescript') stack = { typescript: "5.5", framework: "react" };
+      else if (selectedStack === 'rust') stack = { rust: "1.75", edition: "2021" };
+      else if (selectedStack === 'go') stack = { go: "1.22" };
+      else if (selectedStack === 'cpp') stack = { "c++": "20" };
+      else if (selectedStack === 'sql') stack = { postgresql: "16" };
+      else stack = {}; // Auto-detect by AI
 
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Executing Pipeline...</span>`;
+      submitBtn.innerHTML = `<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Gemini 3.8 Generating & Verifying...</span>`;
       lucide.createIcons();
 
       try {
@@ -486,8 +832,8 @@
           ['planner', 'generator', 'verifier', 'renderer'].forEach(stage => {
             const pill = document.getElementById(`pill-${stage}`);
             if (stage === d.stage) {
-              pill.className = "py-1 rounded bg-emerald-600 text-white font-semibold animate-pulse";
-            } else if (d.progress >= 80) {
+              pill.className = "py-1 rounded bg-indigo-600 text-white font-semibold animate-pulse";
+            } else if (d.progress >= 85) {
               pill.className = "py-1 rounded bg-slate-800 text-white font-semibold";
             }
           });
@@ -495,13 +841,13 @@
           if (d.stage === 'complete') {
             sse.close();
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck</span>`;
+            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck with Gemini 3.8</span>`;
             loadDeck(deck_id);
             lucide.createIcons();
           } else if (d.stage === 'failed') {
             sse.close();
             submitBtn.disabled = false;
-            alert(d.message);
+            alert('Pipeline failed: ' + d.message);
           }
         };
       } catch (err) {
@@ -510,19 +856,46 @@
       }
     }
 
-    async function regenerateActiveSlide() {
+    function openRegenModal() {
+      document.getElementById('regenModal').classList.remove('hidden');
+    }
+
+    function closeRegenModal() {
+      document.getElementById('regenModal').classList.add('hidden');
+    }
+
+    function setRegenHint(hint) {
+      document.getElementById('regenHintInput').value = hint;
+    }
+
+    async function submitSlideRegeneration() {
       if (!currentDeck) return;
       const sid = currentDeck.slides[activeIndex].id;
-      const res = await fetch(`/decks/${currentDeck.deck_id}/slides/${sid}/regenerate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt_hint: 'Deepen error checks and status responses' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        currentDeck.slides[activeIndex] = data.slide;
-        renderActiveSlide();
-        alert(`Slide ${sid} re-generated, verified, and re-rendered successfully!`);
+      const hint = document.getElementById('regenHintInput').value || 'Deepen code examples and add edge case handling';
+      const btn = document.getElementById('submitRegenBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="rotate-cw" class="w-3.5 h-3.5 animate-spin"></i> Regenerating...`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`/decks/${currentDeck.deck_id}/slides/${sid}/regenerate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt_hint: hint })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentDeck.slides[activeIndex] = data.slide;
+          renderActiveSlide();
+          closeRegenModal();
+          alert(`Slide ${sid} re-generated with AI and verified in sandbox!`);
+        }
+      } catch (e) {
+        alert('Regeneration error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Regenerate & Re-verify`;
+        lucide.createIcons();
       }
     }
 
@@ -582,10 +955,22 @@
       }
     }
 
-    // Initialize icons and initial deck load
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      loadDeck('d_001');
+      const params = new URLSearchParams(window.location.search);
+      const deckId = params.get('deck') || 'd_001';
+      const initialSlide = parseInt(params.get('slide'));
+      const initialTab = params.get('tab');
+
+      loadDeck(deckId).then(() => {
+        if (!isNaN(initialSlide) && currentDeck && initialSlide >= 0 && initialSlide < currentDeck.slides.length) {
+          activeIndex = initialSlide;
+          renderActiveSlide();
+        }
+        if (initialTab) {
+          switchTab(initialTab);
+        }
+      });
     });
   </script>
 </body>
