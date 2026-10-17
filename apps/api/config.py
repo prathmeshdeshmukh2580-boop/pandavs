@@ -10,13 +10,18 @@ class Settings:
     VERSION: str = "1.0.0"
 
     # ── LLM Settings ────────────────────────────────────────────────────────────
-    # Primary: Google Gemini (free tier, fast)
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str   = os.getenv("GEMINI_MODEL", "models/gemini-3.8-flash")
+    # Google Gemini Configuration (disabled — kept for reference only)
+    GEMINI_API_KEY: str = ""  # Disabled: Qwen/Ollama is now the primary provider
+    GEMINI_MODEL: str   = os.getenv("GEMINI_MODEL", "models/gemini-2.0-flash")
 
-    # Secondary fallback: Anthropic Claude
+    # Secondary fallback: Anthropic Claude (legacy, unused)
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
+
+    # Ollama / Qwen Configuration (primary LLM provider)
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen3:8b")
+    OLLAMA_TIMEOUT_SEC: int = int(os.getenv("OLLAMA_TIMEOUT_SEC", "120"))
     
     # Sandbox Settings
     SANDBOX_TIMEOUT_SEC: int = int(os.getenv("SANDBOX_TIMEOUT_SEC", "30"))

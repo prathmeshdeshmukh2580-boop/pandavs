@@ -55,7 +55,8 @@ class TestGeneratorDeterministic:
         gen = CourseGenerator()
         stack = lang_stack or {"python": "3.12"}
         plan = {"topic": topic, "level": "beginner", "minutes": 30, "stack": stack}
-        return gen.generate_deck(plan)
+        lang, version = _infer_lang_and_version(stack, topic)
+        return gen._generate_deterministic(plan, lang, version)
 
     def test_deterministic_python_deck_validates(self):
         deck = self._generate("Python FastAPI basics", {"python": "3.12"})
@@ -228,6 +229,12 @@ class TestInferLang:
 # ===================================================================
 
 class TestCreateDeck:
+    @pytest.fixture(autouse=True)
+    def fallback_ollama(self, monkeypatch):
+        """Mock out Qwen to immediately return None (deterministic fallback) for fast API unit tests."""
+        from apps.api.generator import CourseGenerator
+        monkeypatch.setattr(CourseGenerator, "_generate_with_qwen", lambda *args, **kwargs: None)
+
     def test_create_deck_returns_deck_id(self):
         r = client.post("/decks", json={
             "topic": "Python basics",

@@ -24,6 +24,7 @@ from apps.api.models import (
 )
 from apps.api.store import DeckStore
 from apps.api.generator import CourseGenerator
+from apps.api.generator import check_ollama_health as _check_ollama_health
 from apps.api.schema_util import deck_errors
 
 # Configure logging
@@ -84,6 +85,7 @@ def health_check():
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
+        "ollama_available": _check_ollama_health(),
         "gemini_available": bool(getattr(settings, "GEMINI_API_KEY", "")),
         "orchestrator_available": _orchestrator is not None,
         "sandbox_timeout_sec": settings.SANDBOX_TIMEOUT_SEC,

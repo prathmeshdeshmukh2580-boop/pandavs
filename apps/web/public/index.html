@@ -48,7 +48,7 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-lg font-bold tracking-tight text-white">Verified Course Material Studio</h1>
-          <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium">Gemini 3.8 Flash AI</span>
+          <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium">Qwen3 Local AI</span>
           <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">Zero-Trust Sandbox</span>
         </div>
         <p class="text-xs text-slate-400">Masterclass-grade slides, verified code & dual-prover exercises for any topic & student level</p>
@@ -162,7 +162,7 @@
 
           <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition text-sm">
             <i data-lucide="play" class="w-4 h-4"></i>
-            <span>Generate Verified Deck with Gemini 3.8</span>
+            <span>Generate Verified Deck with Qwen3</span>
           </button>
         </form>
       </div>
@@ -410,7 +410,7 @@
         </h3>
         <button onclick="closeRegenModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <p class="text-xs text-slate-400">Enter custom pedagogical instructions for Gemini to rewrite, deepen, and re-verify this active slide.</p>
+      <p class="text-xs text-slate-400">Enter custom pedagogical instructions for Qwen3 to rewrite, deepen, and re-verify this active slide.</p>
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-1">Instruction / Hint</label>
         <textarea id="regenHintInput" rows="3" placeholder="e.g. Add defensive error boundary handling and explain why HTTP 422 is preferred over 400..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
@@ -815,7 +815,7 @@
 
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Gemini 3.8 Generating & Verifying...</span>`;
+      submitBtn.innerHTML = `<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Qwen3 Generating & Verifying...</span>`;
       lucide.createIcons();
 
       try {
@@ -846,14 +846,24 @@
           if (d.stage === 'complete') {
             sse.close();
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck with Gemini 3.8</span>`;
+            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck with Qwen3</span>`;
             loadDeck(deck_id);
             lucide.createIcons();
           } else if (d.stage === 'failed') {
             sse.close();
             submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck with Qwen3</span>`;
+            lucide.createIcons();
             alert('Pipeline failed: ' + d.message);
           }
+        };
+
+        sse.onerror = (err) => {
+          sse.close();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Generate Verified Deck with Qwen3</span>`;
+          lucide.createIcons();
+          loadDeck(deck_id);
         };
       } catch (err) {
         submitBtn.disabled = false;
