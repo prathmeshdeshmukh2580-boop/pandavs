@@ -14,12 +14,16 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: |
+            apps/api/requirements.txt
+            services/verifier/requirements.txt
+            services/renderer/requirements.txt
       - name: Install dependencies
         run: |
           pip install -r apps/api/requirements.txt -r services/verifier/requirements.txt -r services/renderer/requirements.txt
       - name: Run test suite
         run: |
-          pytest -q apps services -m "not slow"
+          python -m pytest -q apps services -m "not slow"
 
   web:
     runs-on: ubuntu-latest
@@ -28,7 +32,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # No cache: npm lock file is not committed; install fresh
       - name: Install dependencies
         run: cd apps/web && npm install
       - name: Build Next.js

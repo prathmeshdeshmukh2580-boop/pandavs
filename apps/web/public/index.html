@@ -646,25 +646,21 @@
       const diagBox = document.getElementById('slideDiagramContainer');
       const mermaidBox = document.getElementById('mermaidRenderBox');
       const rawBox = document.getElementById('diagramRawBox');
-      if (s.diagram && s.diagram.trim().length > 0) {
+      const diagText = (s.diagram && typeof s.diagram === 'object' && s.diagram.source) ? s.diagram.source : (typeof s.diagram === 'string' ? s.diagram : '');
+      if (diagText && diagText.trim().length > 0) {
         diagBox.classList.remove('hidden');
-<<<<<<< HEAD
-        rawBox.innerText = s.diagram;
+        rawBox.innerText = diagText;
         mermaidBox.innerHTML = '';
         try {
           const id = 'mermaid_' + Math.random().toString(36).substring(7);
-          mermaid.render(id, s.diagram).then(({ svg }) => {
+          mermaid.render(id, diagText).then(({ svg }) => {
             mermaidBox.innerHTML = svg;
           }).catch(err => {
-            mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${s.diagram}</pre>`;
+            mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${diagText}</pre>`;
           });
         } catch (e) {
-          mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${s.diagram}</pre>`;
+          mermaidBox.innerHTML = `<pre class="text-xs text-sky-300 font-mono text-left">${diagText}</pre>`;
         }
-=======
-        const diagText = typeof s.diagram === 'object' && s.diagram.source ? s.diagram.source : s.diagram;
-        document.getElementById('diagramSource').innerText = diagText;
->>>>>>> origin/main
       } else {
         diagBox.classList.add('hidden');
       }

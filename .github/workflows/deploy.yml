@@ -8,7 +8,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate deployment credentials
+        id: check_secrets
+        run: |
+          if [ -z "${{ secrets.VM_HOST }}" ] || [ -z "${{ secrets.VM_SSH_KEY }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Deployment credentials (VM_HOST and/or VM_SSH_KEY) not found in GitHub repository secrets. Deployment skipped."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to Cloud VM over SSH
+        if: steps.check_secrets.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VM_HOST }}
