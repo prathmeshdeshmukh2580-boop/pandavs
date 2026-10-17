@@ -68,6 +68,12 @@ if _ORCHESTRATOR_AVAILABLE:
         logger.warning("Orchestrator initialisation failed (%s); lightweight mode.", _init_err)
         _orchestrator = None
 
+from fastapi.staticfiles import StaticFiles
+
+# Mount static assets directory for logo and presentation previews
+assets_dir = BASE_DIR / "apps" / "web" / "public" / "assets"
+if assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
 # ---------------------------------------------------------------------------
 # Endpoints
