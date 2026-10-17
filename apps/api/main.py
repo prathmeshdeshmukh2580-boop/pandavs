@@ -288,6 +288,77 @@ def get_deck_notes(deck_id: str):
     return exporter.export_notes(deck)
 
 
+@app.get("/decks/{deck_id}/trainer-guide")
+def get_trainer_guide(deck_id: str, download: bool = Query(False)):
+    """Retrieve or download the Comprehensive Instructor Delivery Guide."""
+    deck = store.get_deck(deck_id)
+    if not deck:
+        raise HTTPException(status_code=404, detail=f"Deck '{deck_id}' not found")
+    
+    guide_file = settings.DATA_DIR / "exports" / f"{deck_id}_trainer_guide.md"
+    if not guide_file.exists():
+        if _orchestrator is not None:
+            _orchestrator.exporter.export_trainer_guide(deck)
+        else:
+            from services.renderer.exporter import Exporter
+            Exporter(str(settings.DATA_DIR / "exports")).export_trainer_guide(deck)
+    
+    if download:
+        return FileResponse(
+            guide_file,
+            media_type="text/markdown",
+            filename=f"{deck_id}_trainer_guide.md"
+        )
+    with open(guide_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    return {"deck_id": deck_id, "format": "markdown", "content": content}
+
+
+@app.get("/decks/{deck_id}/student-notes")
+def get_student_notes(deck_id: str, download: bool = Query(False)):
+    """Retrieve or download the Student Study Notes & Lab Manual (no spoiler solutions)."""
+    deck = store.get_deck(deck_id)
+    if not deck:
+        raise HTTPException(status_code=404, detail=f"Deck '{deck_id}' not found")
+    
+    notes_file = settings.DATA_DIR / "exports" / f"{deck_id}_student_notes.md"
+    if not notes_file.exists():
+        if _orchestrator is not None:
+            _orchestrator.exporter.export_student_notes(deck)
+        else:
+            from services.renderer.exporter import Exporter
+            Exporter(str(settings.DATA_DIR / "exports")).export_student_notes(deck)
+    
+    if download:
+        return FileResponse(
+            notes_file,
+            media_type="text/markdown",
+            filename=f"{deck_id}_student_notes.md"
+        )
+    with open(notes_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    return {"deck_id": deck_id, "format": "markdown", "content": content}
+
+
+@app.get("/decks/{deck_id}/quality-review")
+def get_quality_review(deck_id: str):
+    """Retrieve pedagogical quality gate audit report with score and pass/fail metrics."""
+    deck = store.get_deck(deck_id)
+    if not deck:
+        raise HTTPException(status_code=404, detail=f"Deck '{deck_id}' not found")
+    
+    existing = deck.get("meta", {}).get("quality_review")
+    if existing:
+        return existing
+    
+    from apps.api.quality_gate import evaluate_course_quality
+    audit = evaluate_course_quality(deck)
+    deck.setdefault("meta", {})["quality_review"] = audit
+    store.save_deck(deck_id, deck, status="ready")
+    return audit
+
+
+
 # ===================================================================
 # AI Code Verification & Self-Healing Theater Endpoints
 # ===================================================================

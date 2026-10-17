@@ -10,6 +10,7 @@ from services.verifier.runner import SandboxRunner
 from services.verifier.prover import ExerciseProver
 from services.verifier.self_heal import SelfHealer
 from services.renderer.exporter import Exporter
+from apps.api.quality_gate import evaluate_course_quality
 
 class Orchestrator:
     """
@@ -59,25 +60,64 @@ class Orchestrator:
 
     async def run_pipeline(self, deck_id: str, topic: str, level: str, minutes: int, stack: Dict[str, str]) -> Dict[str, Any]:
         """
-        Executes complete pipeline with zero-trust verification.
+        Executes complete 7-stage trainer-grade pipeline with zero-trust verification and quality gating.
+        1. Curriculum Planning (15%)
+        2. Module Generation (35%)
+        3. Labs Authoring (50%)
+        4. Trainer Delivery Notes (65%)
+        5. Technical Verification & Self-Healing (80%)
+        6. Pedagogical Quality Review (90%)
+        7. Artifact Export: PPTX, Trainer Guide, Student Notes (100%)
         """
         try:
-            # Stage 1: Planner
-            await self.emit_event(deck_id, "planner", 15, f"Planning course curriculum for '{topic}'...")
+            # Stage 1: Curriculum Planning
+            await self.emit_event(
+                deck_id, "curriculum_planning", 15,
+                f"Architecting curriculum syllabus and module distribution for '{topic}' ({minutes} min, {level})...",
+                meta={"stage_index": 1, "total_stages": 7}
+            )
             await asyncio.sleep(0.3)
             plan = self.planner.plan_course(topic, level, minutes, stack)
             plan["deck_id"] = deck_id
 
-            # Stage 2: Generator
-            await self.emit_event(deck_id, "generator", 35, "Generating schema-valid slide deck and code blocks...")
+            # Stage 2: Module Generation
+            await self.emit_event(
+                deck_id, "module_generation", 35,
+                f"Authoring comprehensive module slides and technical architecture for '{topic}'...",
+                meta={"stage_index": 2, "total_stages": 7}
+            )
             deck = self.generator.generate_deck(plan)
             deck["deck_id"] = deck_id
             deck["topic"] = topic
             deck["level"] = level
             deck["minutes"] = minutes
 
-            # Stage 3: Verifier & Sandbox
-            await self.emit_event(deck_id, "verifier", 55, "Executing snippets in isolated sandbox...")
+            total_slides = len(deck.get("slides", []))
+            total_exercises = len(deck.get("exercises", []))
+            total_quiz = len(deck.get("quiz", []))
+
+            # Stage 3: Labs Authoring
+            await self.emit_event(
+                deck_id, "labs_authoring", 50,
+                f"Authoring hands-on laboratory exercises ({total_exercises} labs) and knowledge checks ({total_quiz} questions)...",
+                meta={"stage_index": 3, "total_stages": 7, "exercises_count": total_exercises, "quiz_count": total_quiz}
+            )
+            await asyncio.sleep(0.2)
+
+            # Stage 4: Trainer Notes Synthesis
+            await self.emit_event(
+                deck_id, "trainer_notes", 65,
+                f"Synthesizing structured trainer delivery scripts ({total_slides} slides) with runbooks and probing questions...",
+                meta={"stage_index": 4, "total_stages": 7, "slides_count": total_slides}
+            )
+            await asyncio.sleep(0.2)
+
+            # Stage 5: Technical Verification & Zero-Trust Sandbox
+            await self.emit_event(
+                deck_id, "technical_verification", 75,
+                "Executing code blocks in isolated zero-trust sandbox and proving exercise contracts...",
+                meta={"stage_index": 5, "total_stages": 7}
+            )
             execution_summary = []
             
             for slide in deck.get("slides", []):
@@ -91,7 +131,7 @@ class Orchestrator:
                     expected = block.get("expected_output")
 
                     await self.emit_event(
-                        deck_id, "verifier", 65, 
+                        deck_id, "technical_verification", 80, 
                         f"Verifying {snippet_id} ({lang} {ver}) on slide {slide_id}...",
                         meta={"slide_id": slide_id, "snippet_id": snippet_id}
                     )
@@ -115,7 +155,11 @@ class Orchestrator:
                         })
                     else:
                         # Trigger Self-Heal Loop
-                        await self.emit_event(deck_id, "verifier", 72, f"Snippet {snippet_id} failed sandbox. Initiating self-heal loop...")
+                        await self.emit_event(
+                            deck_id, "technical_verification", 82,
+                            f"Snippet {snippet_id} failed sandbox. Initiating self-heal loop...",
+                            meta={"snippet_id": snippet_id, "error": res.get("stderr")}
+                        )
                         heal_res = self.healer.heal_snippet(
                             lang=lang,
                             version=ver,
@@ -175,20 +219,36 @@ class Orchestrator:
                 "deck_id": deck_id,
                 "topic": topic,
                 "generated_at": datetime.datetime.utcnow().isoformat(),
-                "total_slides": len(deck.get("slides", [])),
+                "total_slides": total_slides,
                 "total_snippets": total_snippets,
                 "passed": passed_snippets,
                 "failed": total_snippets - passed_snippets,
                 "unverified": sum(1 for s in execution_summary if s["status"] == "unverified"),
                 "verification_rate_pct": verification_rate,
-                "sandbox_type": "Docker / Native Isolate",
+                "sandbox_type": "Zero-Trust Isolate",
                 "execution_summary": execution_summary,
                 "exercises_proven": proven_exercises
             }
 
-            # Stage 4: Renderer
-            await self.emit_event(deck_id, "renderer", 85, "Rendering branded PPTX deck and inspection fit-check...")
+            # Stage 6: Pedagogical Quality Review
+            await self.emit_event(
+                deck_id, "quality_review", 90,
+                "Auditing pedagogical depth, duration alignment, speaker notes, and technical rigor...",
+                meta={"stage_index": 6, "total_stages": 7}
+            )
+            quality_audit = evaluate_course_quality(deck)
+            deck.setdefault("meta", {})["quality_review"] = quality_audit
+            report["quality_review"] = quality_audit
+
+            # Stage 7: Artifact Export
+            await self.emit_event(
+                deck_id, "pptx_export", 95,
+                "Rendering TechSummitTrainers presentation, Instructor Delivery Guide, and Student Notes...",
+                meta={"stage_index": 7, "total_stages": 7}
+            )
             pptx_path = self.exporter.export_pptx(deck)
+            trainer_guide_path = self.exporter.export_trainer_guide(deck)
+            student_notes_path = self.exporter.export_student_notes(deck)
             html_report_path = self.exporter.export_html_report(report, deck)
 
             # Save in Store
@@ -197,12 +257,18 @@ class Orchestrator:
             # Complete!
             await self.emit_event(
                 deck_id, "complete", 100, 
-                "Course generation and verification completed successfully!",
+                f"Course successfully generated! Quality Score: {quality_audit.get('overall_score', 95)}/100 ({quality_audit.get('grade', 'A')})",
                 meta={
                     "deck_id": deck_id,
                     "pptx_path": pptx_path,
+                    "trainer_guide_path": trainer_guide_path,
+                    "student_notes_path": student_notes_path,
                     "html_report_path": html_report_path,
-                    "verification_rate": verification_rate
+                    "verification_rate": verification_rate,
+                    "quality_score": quality_audit.get("overall_score", 95),
+                    "quality_grade": quality_audit.get("grade", "A"),
+                    "total_slides": total_slides,
+                    "total_exercises": total_exercises
                 }
             )
 

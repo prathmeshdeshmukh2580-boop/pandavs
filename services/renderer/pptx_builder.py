@@ -262,7 +262,7 @@ class PPTXBuilder:
         ftf = footer_box.text_frame
         ftf.word_wrap = True
         p = ftf.paragraphs[0]
-        p.text = f"TechSummitTrainers  ·  {topic}  ·  Powered by Pandavs AI  ·  100% Sandbox Verified"
+        p.text = f"TechSummitTrainers  ·  {topic}  ·  Powered by Pandavs AI  ·  Zero-Trust Verification"
         p.font.size = Pt(9)
         p.font.color.rgb = TEXT_MUTED
 
@@ -271,7 +271,8 @@ class PPTXBuilder:
         if not notes_text and context:
             notes_text = self._generate_rich_notes(slide_type, context)
         elif notes_text and context:
-            notes_text = f"TRAINER DELIVERY GUIDANCE:\n{notes_text}\n\n" + self._generate_delivery_tips(slide_type, context)
+            if "TEACHING OBJECTIVE:" not in notes_text:
+                notes_text = f"TRAINER DELIVERY GUIDANCE:\n{notes_text}\n\n" + self._generate_delivery_tips(slide_type, context)
 
         if notes_text:
             notes_slide = slide.notes_slide

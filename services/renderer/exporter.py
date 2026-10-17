@@ -218,3 +218,257 @@ class Exporter:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(html)
         return str(output_file)
+
+    def export_trainer_guide(self, deck_data: Dict[str, Any]) -> str:
+        """
+        Generates a comprehensive Markdown Instructor Delivery Guide.
+        Includes timed agenda, delivery preparation checklist, slide-by-slide scripts,
+        hands-on lab master solutions, and assessment answer keys.
+        """
+        deck_id = deck_data.get("deck_id", "deck")
+        topic = deck_data.get("topic", "Software Architecture")
+        level = deck_data.get("level", "intermediate").capitalize()
+        minutes = deck_data.get("minutes", 90)
+        slides = deck_data.get("slides", [])
+        exercises = deck_data.get("exercises", [])
+        quiz = deck_data.get("quiz", [])
+        meta = deck_data.get("meta", {})
+        blueprint = meta.get("curriculum_blueprint", {})
+        modules = blueprint.get("modules", [])
+
+        output_file = self.export_dir / f"{deck_id}_trainer_guide.md"
+
+        lines = [
+            f"# TechSummitTrainers — Comprehensive Instructor Delivery Guide",
+            f"**Course Title:** {topic}  ",
+            f"**Target Audience:** {level} Software Engineers  ",
+            f"**Allocated Duration:** {minutes} Minutes  ",
+            f"**Curriculum Platform:** TechSummitTrainers · Powered by Pandavs AI  ",
+            f"**Verification Scope:** Zero-Trust Execution Sandbox & Test Verification  ",
+            "",
+            "---",
+            "",
+            "## 1. Timed Curriculum Agenda & Module Structure",
+            "",
+            "| Module | Topic / Focus | Target Duration | Slides |",
+            "|:---|:---|:---:|:---:|",
+        ]
+
+        if modules:
+            for m in modules:
+                slides_str = ", ".join(m.get("slides", []))
+                lines.append(f"| Module {m.get('module')} | {m.get('title')} | {m.get('duration_min')} min | {slides_str} |")
+        else:
+            lines.append(f"| Core Curriculum | {topic} Core Concepts & Implementation | {minutes} min | Slides 1-{len(slides)} |")
+
+        lines.extend([
+            "",
+            "---",
+            "",
+            "## 2. Instructor Pre-Flight & Delivery Preparation Checklist",
+            "",
+            "- [ ] **Workstation Sanity Check:** Verify local terminal tooling and permissions before session start.",
+            "- [ ] **Sandbox Pre-Warm:** Confirm code execution runners or local daemons are active.",
+            "- [ ] **Timing Check:** Keep concept explanations under 4 minutes per slide to preserve dedicated lab time.",
+            "- [ ] **Interactive Polling:** Use the Knowledge Check slides to poll the room before revealing answers.",
+            "- [ ] **Lab Facilitation:** Circulate actively during the practical coding challenge; hint at boundary checks.",
+            "",
+            "---",
+            "",
+            "## 3. Slide-by-Slide Teaching Scripts & Technical Walkthroughs",
+            "",
+        ])
+
+        for idx, slide in enumerate(slides, start=1):
+            title = slide.get("title", f"Slide {idx}")
+            stype = slide.get("type", "content")
+            bullets = slide.get("bullets", [])
+            notes = slide.get("notes", "")
+
+            lines.append(f"### Slide {idx} [{stype.upper()}]: {title}")
+            lines.append("")
+            lines.append("**Key Visual Points Displayed to Students:**")
+            for b in bullets:
+                lines.append(f"- {b}")
+            lines.append("")
+
+            if slide.get("code"):
+                lines.append("**Slide Code Demonstration:**")
+                for cb in slide.get("code"):
+                    lines.append(f"```{cb.get('lang', 'text')}")
+                    lines.append(cb.get("source", "").strip())
+                    lines.append("```")
+                lines.append("")
+
+            lines.append("**Complete Trainer Delivery Guidance:**")
+            lines.append("```")
+            lines.append(notes.strip() if notes else "Walk through key visual points and solicit student questions.")
+            lines.append("```")
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+
+        lines.extend([
+            "## 4. Guided Hands-On Lab: Master Instructor Runbook",
+            "",
+        ])
+
+        if exercises:
+            for ex in exercises:
+                lines.append(f"### Lab: {ex.get('title', 'Hands-on Challenge')}")
+                lines.append(f"**Target Runtime:** {ex.get('lang', 'python')} {ex.get('version', '')}")
+                lines.append("")
+                lines.append("**Specification & Instructions Given to Students:**")
+                lines.append(ex.get("prompt", "Follow the lab instructions."))
+                lines.append("")
+                if ex.get("starter"):
+                    lines.append("**Starter Template Provided to Students:**")
+                    lines.append(f"```{ex.get('lang', 'python')}")
+                    lines.append(ex.get("starter", "").strip())
+                    lines.append("```")
+                    lines.append("")
+                if ex.get("reference"):
+                    lines.append("**INSTRUCTOR REFERENCE SOLUTION (Do NOT share before lab completion):**")
+                    lines.append(f"```{ex.get('lang', 'python')}")
+                    lines.append(ex.get("reference", "").strip())
+                    lines.append("```")
+                    lines.append("")
+                if ex.get("tests"):
+                    lines.append("**Verification Test Suite ('Tests Must Bite' Contract):**")
+                    lines.append(f"```{ex.get('lang', 'python')}")
+                    lines.append(ex.get("tests", "").strip())
+                    lines.append("```")
+                    lines.append("")
+        else:
+            lines.append("No independent coding lab configured for this session.")
+
+        lines.extend([
+            "---",
+            "",
+            "## 5. Assessment Key & Conceptual Distractor Analysis",
+            "",
+        ])
+
+        if quiz:
+            for q_idx, q in enumerate(quiz, start=1):
+                options = q.get("options", [])
+                ans_idx = q.get("answer_index", 0)
+                correct_text = options[ans_idx] if 0 <= ans_idx < len(options) else "N/A"
+                lines.append(f"**Question {q_idx}:** {q.get('question')}")
+                for opt_i, opt in enumerate(options):
+                    prefix = "✅ **[CORRECT]**" if opt_i == ans_idx else "❌ [DISTRACTOR]"
+                    lines.append(f"  - {chr(65 + opt_i)}. {opt} {prefix}")
+                lines.append(f"**Instructor Rationale:** {q.get('explanation', 'Matches architectural invariants.')}")
+                lines.append("")
+        else:
+            lines.append("Assessment conducted via open Q&A.")
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        return str(output_file)
+
+    def export_student_notes(self, deck_data: Dict[str, Any]) -> str:
+        """
+        Generates a learner-friendly Student Companion Reference.
+        Contains core concepts, command reference, step-by-step lab tasks,
+        and self-assessment review questions (without instructor spoilers).
+        """
+        deck_id = deck_data.get("deck_id", "deck")
+        topic = deck_data.get("topic", "Software Architecture")
+        level = deck_data.get("level", "intermediate").capitalize()
+        minutes = deck_data.get("minutes", 90)
+        slides = deck_data.get("slides", [])
+        exercises = deck_data.get("exercises", [])
+        cheat_sheet = deck_data.get("cheat_sheet", "")
+        quiz = deck_data.get("quiz", [])
+
+        output_file = self.export_dir / f"{deck_id}_student_notes.md"
+
+        lines = [
+            f"# TechSummitTrainers — Student Companion Reference",
+            f"**Course:** {topic}  ",
+            f"**Level:** {level}  ",
+            f"**Duration:** {minutes} Minutes  ",
+            f"**Organization:** TechSummitTrainers Curriculum  ",
+            "",
+            "---",
+            "",
+            "## 1. Course Learning Outcomes",
+            "",
+            f"By completing this session on {topic}, you will have achieved mastery in:",
+            "- Understanding core runtime architecture, memory models, and system boundaries",
+            "- Applying production-grade patterns, validation contracts, and configuration hygiene",
+            "- Hands-on development, containerization, debugging, and verification workflows",
+            "- Diagnosing and resolving common runtime failures and operational bottlenecks",
+            "",
+            "---",
+            "",
+            "## 2. Module Syllabus & Core Technical Concepts",
+            "",
+        ]
+
+        for idx, slide in enumerate(slides, start=1):
+            title = slide.get("title", f"Slide {idx}")
+            bullets = slide.get("bullets", [])
+            lines.append(f"### {idx}. {title}")
+            for b in bullets:
+                lines.append(f"- {b}")
+            if slide.get("code"):
+                for cb in slide.get("code"):
+                    lines.append(f"```{cb.get('lang', 'text')}")
+                    lines.append(cb.get("source", "").strip())
+                    lines.append("```")
+            lines.append("")
+
+        if cheat_sheet:
+            lines.extend([
+                "---",
+                "",
+                "## 3. Quick Command Reference & Operational Cheatsheet",
+                "",
+                "```",
+                cheat_sheet.strip(),
+                "```",
+                "",
+            ])
+
+        lines.extend([
+            "---",
+            "",
+            "## 4. Hands-on Laboratory Challenge",
+            "",
+        ])
+
+        if exercises:
+            for ex in exercises:
+                lines.append(f"### {ex.get('title', 'Lab Challenge')}")
+                lines.append(ex.get("prompt", "Follow the lab instructions."))
+                lines.append("")
+                if ex.get("starter"):
+                    lines.append("**Starter Code:**")
+                    lines.append(f"```{ex.get('lang', 'python')}")
+                    lines.append(ex.get("starter", "").strip())
+                    lines.append("```")
+                    lines.append("")
+        else:
+            lines.append("Lab exercises conducted live during class.")
+
+        lines.extend([
+            "---",
+            "",
+            "## 5. Self-Study & Revision Questions",
+            "",
+        ])
+
+        if quiz:
+            for q_idx, q in enumerate(quiz, start=1):
+                lines.append(f"**{q_idx}. {q.get('question')}**")
+                for opt_i, opt in enumerate(q.get("options", [])):
+                    lines.append(f"   {chr(65 + opt_i)}. {opt}")
+                lines.append("")
+        else:
+            lines.append("Review slide key takeaways for self-assessment.")
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        return str(output_file)

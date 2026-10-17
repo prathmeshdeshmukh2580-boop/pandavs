@@ -10,6 +10,8 @@ class CreateDeckRequest(BaseModel):
         default_factory=lambda: {"java": "21", "spring_boot": "3.3"},
         json_schema_extra={"example": {"java": "21", "spring_boot": "3.3"}}
     )
+    depth: Optional[str] = Field("trainer_masterclass", json_schema_extra={"example": "trainer_masterclass"})
+    target_audience: Optional[str] = Field(None, json_schema_extra={"example": "Intermediate Software Engineers"})
 
 
 class VerifyRequest(BaseModel):

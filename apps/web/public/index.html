@@ -745,46 +745,68 @@
       <!-- VIEW 8: EXPORT CENTER -->
       <!-- ===================================================================== -->
       <section id="view-export" class="hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           <!-- PPTX Card -->
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition">
-            <div class="w-10 h-10 rounded-lg bg-[#F5A400]/15 flex items-center justify-center text-[#F5A400]">
-              <i data-lucide="presentation" class="w-5 h-5"></i>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-white">PowerPoint Presentation (.PPTX)</h3>
-              <p class="text-xs text-slate-400 mt-1">Official TechSummitTrainers 16:9 widescreen template, embedded logo, and speaker delivery notes.</p>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-[#F5A400]/15 flex items-center justify-center text-[#F5A400]">
+                <i data-lucide="presentation" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">PowerPoint Presentation (.PPTX)</h3>
+                <p class="text-xs text-slate-400 mt-1">Official TechSummitTrainers 16:9 widescreen template, embedded logo, and detailed speaker delivery notes.</p>
+              </div>
             </div>
             <a id="exportCenterPptxBtn" href="/decks/d_001/export?format=pptx" download class="w-full bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition">
               <i data-lucide="download" class="w-4 h-4"></i> Download PPTX
             </a>
           </div>
 
-          <!-- HTML Report Card -->
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition">
-            <div class="w-10 h-10 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
-              <i data-lucide="file-check-2" class="w-5 h-5"></i>
+          <!-- Instructor Delivery Guide Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">Trainer Delivery Guide (.MD)</h3>
+                <p class="text-xs text-slate-400 mt-1">Comprehensive instructor delivery manual with timed agenda, speaking scripts, lab answers, and misconceptions.</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-sm font-bold text-white">Zero-Trust Audit Report (.HTML)</h3>
-              <p class="text-xs text-slate-400 mt-1">Standalone interactive verification dashboard with individual snippet execution timings.</p>
-            </div>
-            <a id="exportCenterHtmlBtn" href="/decks/d_001/report?format=html" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition">
-              <i data-lucide="external-link" class="w-4 h-4 text-sky-400"></i> View Audit Report
+            <a id="exportCenterTrainerGuideBtn" href="/decks/d_001/trainer-guide?download=true" download class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition">
+              <i data-lucide="download" class="w-4 h-4"></i> Download Trainer Guide
             </a>
           </div>
 
-          <!-- Notes Card -->
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition">
-            <div class="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400">
-              <i data-lucide="file-text" class="w-5 h-5"></i>
+          <!-- Student Notes Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">Student Notes & Lab Manual (.MD)</h3>
+                <p class="text-xs text-slate-400 mt-1">Classroom handout with key concepts, command references, and hands-on lab instructions (no spoiler solutions).</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-sm font-bold text-white">Curriculum Notes Companion</h3>
-              <p class="text-xs text-slate-400 mt-1">Trainer delivery walkthroughs, student cheat sheets, and distractor solutions in JSON/Markdown.</p>
+            <a id="exportCenterStudentNotesBtn" href="/decks/d_001/student-notes?download=true" download class="w-full bg-slate-800 hover:bg-slate-700 text-purple-400 border border-purple-500/30 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition">
+              <i data-lucide="download" class="w-4 h-4"></i> Download Student Notes
+            </a>
+          </div>
+
+          <!-- HTML Report Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 hover:border-slate-700 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
+                <i data-lucide="file-check-2" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">Zero-Trust Audit Report (.HTML)</h3>
+                <p class="text-xs text-slate-400 mt-1">Standalone interactive verification dashboard with individual snippet execution timings and Quality Gate score.</p>
+              </div>
             </div>
-            <a id="exportCenterNotesBtn" href="/decks/d_001/notes" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition">
-              <i data-lucide="file-code" class="w-4 h-4 text-purple-400"></i> View JSON Notes
+            <a id="exportCenterHtmlBtn" href="/decks/d_001/report?format=html" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition">
+              <i data-lucide="external-link" class="w-4 h-4 text-sky-400"></i> View Audit Report
             </a>
           </div>
         </div>
@@ -1015,8 +1037,13 @@
       document.getElementById('topExportBtn').href = `/decks/${deck.deck_id}/export?format=pptx`;
       document.getElementById('previewExportBtn').href = `/decks/${deck.deck_id}/export?format=pptx`;
       document.getElementById('exportCenterPptxBtn').href = `/decks/${deck.deck_id}/export?format=pptx`;
+      if (document.getElementById('exportCenterTrainerGuideBtn')) {
+        document.getElementById('exportCenterTrainerGuideBtn').href = `/decks/${deck.deck_id}/trainer-guide?download=true`;
+      }
+      if (document.getElementById('exportCenterStudentNotesBtn')) {
+        document.getElementById('exportCenterStudentNotesBtn').href = `/decks/${deck.deck_id}/student-notes?download=true`;
+      }
       document.getElementById('exportCenterHtmlBtn').href = `/decks/${deck.deck_id}/report?format=html`;
-      document.getElementById('exportCenterNotesBtn').href = `/decks/${deck.deck_id}/notes`;
       renderCurrentSlide();
       renderThumbnails();
       loadTelemetryReport(deck.deck_id);
@@ -1374,7 +1401,7 @@
           log.innerHTML += `<span class="text-slate-300">> [${evData.stage || 'progress'}] ${evData.message || ''}</span><br>`;
           log.scrollTop = log.scrollHeight;
 
-          if (evData.stage === "completed" || evData.progress >= 100) {
+          if (evData.stage === "completed" || evData.stage === "complete" || evData.progress >= 100) {
             evSource.close();
             document.getElementById('pipelineBadge').textContent = "COMPLETED";
             document.getElementById('pipelineBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono";

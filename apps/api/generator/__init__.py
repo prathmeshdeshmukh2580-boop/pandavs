@@ -27,6 +27,19 @@ except ImportError:
 
     settings = _Settings()
 
+try:
+    from apps.api.speaker_notes import build_trainer_delivery_notes
+except ImportError:
+    from speaker_notes import build_trainer_delivery_notes
+
+try:
+    from apps.api.generator.docker_benchmark import build_docker_benchmark_deck
+except ImportError:
+    try:
+        from generator.docker_benchmark import build_docker_benchmark_deck
+    except ImportError:
+        build_docker_benchmark_deck = None
+
 __all__ = [
     "CourseGenerator",
     "_patch_deck",
@@ -34,6 +47,7 @@ __all__ = [
     "_parse_json_response",
     "_build_qwen_prompt",
     "check_ollama_health",
+    "build_docker_benchmark_deck",
 ]
 
 
@@ -98,12 +112,22 @@ def _build_qwen_prompt(topic: str, level: str, minutes: int,
             f"CRITICAL TOPIC REQUIREMENTS ({topic}):\n"
             "- Focus on REST API endpoints, request handling, response models, and data validation.\n"
         )
+    elif any(k in topic_lower for k in ("docker", "container", "containerization", "podman", "cgroup", "namespaces", "oci")):
+        topic_guidance = (
+            f"CRITICAL TOPIC REQUIREMENTS (Docker Masterclass - {topic}):\n"
+            "- Structure content across real modules: architecture (dockerd/containerd/runc), namespaces & cgroups,\n"
+            "  image layers & overlay2 CoW, Dockerfile hygiene (BuildKit, multi-stage), port publishing, volumes vs bind mounts,\n"
+            "  networking drivers (bridge, host, overlay), troubleshooting runbooks, and guided hands-on lab.\n"
+            "- Do NOT generate generic or irrelevant code; use real Docker instructions or real microservice code.\n"
+        )
     else:
         topic_guidance = (
             f"CRITICAL TOPIC REQUIREMENTS:\n"
             f"- All slide titles, bullet points, code examples, exercises, and quiz items MUST strictly pertain to '{topic}'.\n"
             "- Do NOT generate generic or unrelated web frameworks unless explicitly requested in the topic.\n"
         )
+
+    target_slides = "20-25" if minutes >= 75 else ("12-16" if minutes >= 45 else "6-10")
 
     return f"""You are a course-material generator for the Verified Course Material Studio.
 Generate a complete, high-quality lesson deck about "{topic}" for {level} students ({minutes} min).
@@ -139,7 +163,7 @@ Each slide object must have **exactly** these keys (no extra keys):
        "kind": "{kind_hint}", "source": "...", "expected_output": null,
        "verified": "unverified", "attempts": 0 }}
 - diagram: either null or {{ "id": "g_NNN", "kind": "mermaid", "source": "..." }}
-- notes: string (speaker notes for delivery)
+- notes: string (detailed trainer speaker notes for delivery, min 80-150 words with explanation, key questions, and troubleshooting)
 
 ### Exercise rules
 Each exercise must have **exactly** these keys:
@@ -152,7 +176,7 @@ Each quiz item must have **exactly** these keys:
   id (pattern q_NNN), question, options (2-6 strings), answer_index (int 0-5), explanation
 
 ### Content guidelines
-- Generate 5-7 slides with varied types.
+- Generate {target_slides} slides with varied types to thoroughly cover the topic for the allocated {minutes} minutes.
 - All code must be {lang.upper()} {version}. Write real, correct, runnable code.
 - If lang is python use kind "plain". If lang is java, "plain" for standalone programs or "spring-fragment" for Spring Boot fragments.
 - Include at least 1 exercise and at least 3 quiz questions directly testing "{topic}".
@@ -243,6 +267,19 @@ def _patch_deck(deck: dict, lang: str, version: str) -> dict:
         slide.setdefault("id", f"s_{i + 1:03d}")
         slide.setdefault("bullets", [])
         slide.setdefault("notes", "")
+
+        # Ensure substantive notes (trainer-grade depth)
+        current_notes = slide.get("notes", "")
+        if (not current_notes or len(current_notes.split()) < 35) and build_trainer_delivery_notes is not None:
+            slide["notes"] = build_trainer_delivery_notes(
+                slide_title=slide.get("title", f"Slide {i + 1}"),
+                slide_type=slide.get("type", "content"),
+                bullets=slide.get("bullets", []),
+                topic=deck.get("topic", "Software Engineering"),
+                level=deck.get("level", "intermediate"),
+                time_minutes=max(2, deck.get("minutes", 60) // max(len(deck.get("slides", [1])), 1)),
+                custom_guidance={"explanation": current_notes} if current_notes else None,
+            )
 
         # fix invalid type
         if slide.get("type") not in _VALID_SLIDE_TYPES:
@@ -1136,6 +1173,10 @@ class CourseGenerator:
         # Route to appropriate topic-specific builder
         if lang == "java" or "java" in topic_lower or "spring" in topic_lower or "java" in stack_keys:
             return _build_java_spring_deck(deck_id, topic, level, minutes, stack, version)
+
+        # Check for Docker / Containerization topics
+        if any(k in topic_lower for k in ("docker", "container", "containerization", "podman", "cgroup", "namespaces", "oci", "image")) and build_docker_benchmark_deck is not None:
+            return build_docker_benchmark_deck(deck_id, topic, level, minutes, stack, version)
 
         # Check for Python Variables / Fundamentals
         if any(k in topic_lower for k in ("variable", "datatype", "data type", "naming rule", "type conversion", "mutability")):

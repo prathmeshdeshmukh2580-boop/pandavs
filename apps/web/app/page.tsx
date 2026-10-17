@@ -177,7 +177,7 @@ export default function StudioDashboard() {
             `> [${evData.stage || "progress"}] ${evData.message || ""}`,
           ]);
 
-          if (evData.stage === "completed" || evData.progress >= 100) {
+          if (evData.stage === "completed" || evData.stage === "complete" || evData.progress >= 100) {
             eventSource.close();
             setIsGenerating(false);
             setPipelineBadge("COMPLETED");
@@ -1512,19 +1512,21 @@ export default function StudioDashboard() {
 
           {/* VIEW 8: EXPORT CENTER */}
           {currentNav === "export" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-[#F5A400]/15 flex items-center justify-center text-[#F5A400]">
-                  <Presentation className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">
-                    PowerPoint Presentation (.PPTX)
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Official TechSummitTrainers 16:9 widescreen presentation
-                    with embedded logo and speaker notes.
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#F5A400]/15 flex items-center justify-center text-[#F5A400]">
+                    <Presentation className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      PowerPoint Presentation (.PPTX)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Official TechSummitTrainers 16:9 widescreen presentation
+                      with embedded logo and speaker notes.
+                    </p>
+                  </div>
                 </div>
                 <a
                   href={`${API_BASE}/decks/${activeDeckId}/export?format=pptx`}
@@ -1535,18 +1537,66 @@ export default function StudioDashboard() {
                 </a>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
-                  <ShieldCheck className="w-5 h-5" />
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Trainer Delivery Guide (.MD)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Comprehensive instructor manual with timed agenda, speaking scripts, lab answers, and misconceptions.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">
-                    Zero-Trust Audit Report (.HTML)
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Interactive verification telemetry with snippet execution
-                    durations and test proofs.
-                  </p>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/trainer-guide?download=true`}
+                  download
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition"
+                >
+                  <Download className="w-4 h-4" /> Download Trainer Guide
+                </a>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Student Notes & Lab Manual (.MD)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Classroom handout with core concepts, command references, and hands-on lab instructions (no spoiler solutions).
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/student-notes?download=true`}
+                  download
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-purple-400 border border-purple-500/30 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition"
+                >
+                  <Download className="w-4 h-4" /> Download Student Notes
+                </a>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Zero-Trust Audit Report (.HTML)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Interactive verification telemetry with snippet execution
+                      durations, test proofs, and Quality Gate score.
+                    </p>
+                  </div>
                 </div>
                 <a
                   href={`${API_BASE}/decks/${activeDeckId}/report?format=html`}
@@ -1554,28 +1604,6 @@ export default function StudioDashboard() {
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition"
                 >
                   <ExternalLink className="w-4 h-4 text-sky-400" /> View Report
-                </a>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">
-                    Curriculum Notes Companion
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Trainer delivery walkthroughs, student cheat sheets, and
-                    distractor solutions in JSON.
-                  </p>
-                </div>
-                <a
-                  href={`${API_BASE}/decks/${activeDeckId}/notes`}
-                  target="_blank"
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition"
-                >
-                  <FileCode className="w-4 h-4 text-purple-400" /> View JSON Notes
                 </a>
               </div>
             </div>
