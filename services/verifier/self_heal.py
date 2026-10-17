@@ -89,11 +89,12 @@ class SelfHealer:
         Generates fixed code snippet. If Claude API key is configured, uses Claude.
         Otherwise uses rules-based healing engine.
         """
-        if self.api_key:
-            try:
-                import httpx
-                prompt = f"""
-You are a code verification self-healing agent. Fix the following {lang} snippet for version {version}.
+        # Try Qwen3 via Ollama first
+        ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:8b")
+        try:
+            import httpx
+            prompt = f"""You are a code verification self-healing agent. Fix the following {lang} snippet for version {version}.
 Target framework kind: {kind}
 
 Broken Code:
@@ -104,38 +105,27 @@ Broken Code:
 Error Message from Sandbox:
 {error_message}
 
-Prior Attempts:
-{json.dumps(prior_attempts, indent=2)}
-
 Rules:
 1. Output ONLY the raw corrected code inside ``` code block.
 2. Ensure no markdown explanations outside the block.
-3. If Java Spring Boot 3, ensure jakarta.* is used instead of javax.*.
-4. Keep the snippet concise (under 14 lines).
 """
-                resp = httpx.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers={
-                        "x-api-key": self.api_key,
-                        "anthropic-version": "2023-06-01",
-                        "content-type": "application/json"
-                    },
-                    json={
-                        "model": os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022"),
-                        "max_tokens": 1024,
-                        "messages": [{"role": "user", "content": prompt}]
-                    },
-                    timeout=20.0
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    text = data["content"][0]["text"]
-                    match = re.search(r"```(?:\w+)?\n([\s\S]*?)```", text)
-                    if match:
-                        return match.group(1).strip()
-                    return text.strip()
-            except Exception:
-                pass  # Fallback to local rule-based healer
+            resp = httpx.post(
+                f"{ollama_url}/api/chat",
+                json={
+                    "model": ollama_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                },
+                timeout=15.0,
+            )
+            if resp.status_code == 200:
+                text = resp.json().get("message", {}).get("content", "")
+                text = re.sub(r"<think>[\s\S]*?</think>", "", text).strip()
+                match = re.search(r"```(?:\w+)?\n([\s\S]*?)```", text)
+                if match:
+                    return match.group(1).strip()
+        except Exception:
+            pass  # Fallback to local rule-based healer
 
         # Local rule-based self-healer engine
         fixed = broken_code

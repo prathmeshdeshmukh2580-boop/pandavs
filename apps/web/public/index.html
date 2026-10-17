@@ -55,6 +55,10 @@
       </div>
     </div>
     <div class="flex items-center gap-3">
+      <button onclick="openSelfHealTheater()" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/25 transition">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+        <span>Watch AI Fix Its Own Code</span>
+      </button>
       <button onclick="loadDeck('d_001')" class="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition">
         <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
         Demo Deck
@@ -74,6 +78,28 @@
   <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1680px] mx-auto w-full">
     <!-- Left Column: Generator Form & Real-time Progress -->
     <div class="lg:col-span-4 flex flex-col gap-6">
+      <!-- AI Code Verification & Self-Healing Theater Card -->
+      <div class="bg-gradient-to-br from-indigo-950/70 via-slate-900 to-purple-950/50 border border-indigo-500/40 rounded-xl p-5 shadow-lg space-y-3 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+            </span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                AI Code Verification & Self-Healing
+                <span class="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-semibold uppercase">Live Theater</span>
+              </h2>
+              <p class="text-[11px] text-slate-400">Watch Pandavs detect, repair, and re-verify faulty code automatically.</p>
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="openSelfHealTheater()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-xs">
+          <i data-lucide="play" class="w-3.5 h-3.5 text-white"></i>
+          <span>Watch AI Fix Its Own Code</span>
+        </button>
+      </div>
+
       <!-- Course Generator Card -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
         <div class="flex items-center justify-between">
@@ -399,6 +425,193 @@
       </div>
     </div>
   </main>
+
+  <!-- AI Code Verification & Self-Healing Theater Modal -->
+  <div id="selfHealTheaterModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
+            <i data-lucide="sparkles" class="w-6 h-6 text-amber-300"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white tracking-tight">AI Code Verification & Self-Healing Theater</h3>
+              <span id="theaterModeBadge" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold uppercase">Controlled Failure Demo</span>
+            </div>
+            <p class="text-xs text-slate-400">Watch Pandavs detect, repair, and re-verify faulty code automatically in real time.</p>
+          </div>
+        </div>
+        <button onclick="closeSelfHealTheater()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Controls & Example Selector -->
+      <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+            <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i>
+            Faulty Scenario:
+          </span>
+          <div class="flex items-center gap-1.5 flex-wrap" id="theaterExampleSelector">
+            <button type="button" onclick="selectTheaterExample('python_add')" id="thExBtn-python_add" class="text-xs px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-500/20 text-indigo-300 font-semibold transition">
+              ➕ Arithmetic Operator Bug
+            </button>
+            <button type="button" onclick="selectTheaterExample('python_boundary')" id="thExBtn-python_boundary" class="text-xs px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition">
+              🔁 Loop Boundary Bug
+            </button>
+            <button type="button" onclick="selectTheaterExample('python_syntax')" id="thExBtn-python_syntax" class="text-xs px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition">
+              ⚠️ Syntax Colon Error
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="resetTheater()" id="resetTheaterBtn" class="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            Reset
+          </button>
+          <button type="button" onclick="startSelfHealTheaterDemo()" id="startTheaterBtn" class="text-xs bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            <span>Watch AI Fix Its Own Code</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Pipeline Timeline -->
+      <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span class="flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-semibold text-slate-400">
+            <i data-lucide="git-commit" class="w-3.5 h-3.5 text-indigo-400"></i>
+            Live Pipeline Timeline
+          </span>
+          <span id="theaterProgressPct" class="font-bold text-indigo-400 font-mono">0%</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1" id="theaterTimelineGrid">
+          <!-- Step 1 -->
+          <div id="thStep-1" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 1</div>
+            <div class="text-xs font-semibold text-slate-300">Faulty Code</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-1">Loaded</div>
+          </div>
+          <!-- Step 2 -->
+          <div id="thStep-2" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 2</div>
+            <div class="text-xs font-semibold text-slate-300">Sandbox Test</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-2">Pending</div>
+          </div>
+          <!-- Step 3 -->
+          <div id="thStep-3" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 3</div>
+            <div class="text-xs font-semibold text-slate-300">Failure Trace</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-3">Pending</div>
+          </div>
+          <!-- Step 4 -->
+          <div id="thStep-4" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 4</div>
+            <div class="text-xs font-semibold text-slate-300">Self-Healing</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-4">Pending</div>
+          </div>
+          <!-- Step 5 -->
+          <div id="thStep-5" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 5</div>
+            <div class="text-xs font-semibold text-slate-300">Re-Verification</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-5">Pending</div>
+          </div>
+          <!-- Step 6 -->
+          <div id="thStep-6" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 6</div>
+            <div class="text-xs font-semibold text-slate-300">VERIFIED</div>
+            <div class="text-[10px] text-slate-500" id="thStepStatus-6">Pending</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Before and After Code Comparison Panels -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Original Code (Broken) -->
+        <div class="bg-slate-950 rounded-xl border border-rose-500/30 overflow-hidden flex flex-col">
+          <div class="bg-rose-950/40 border-b border-rose-500/30 px-3.5 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="text-xs font-bold text-rose-300 tracking-tight">Original Code — Failed</span>
+            </div>
+            <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded font-mono font-semibold">Assertion Failure</span>
+          </div>
+          <pre class="p-4 text-xs font-mono text-rose-200 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70"><code id="thOriginalCodeView">def add(a: int, b: int) -> int:
+    """Adds two integers and returns their sum."""
+    return a - b</code></pre>
+        </div>
+
+        <!-- Repaired Code (Re-Verified) -->
+        <div class="bg-slate-950 rounded-xl border border-emerald-500/30 overflow-hidden flex flex-col">
+          <div class="bg-emerald-950/40 border-b border-emerald-500/30 px-3.5 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="text-xs font-bold text-emerald-300 tracking-tight">Corrected Code — Re-Verified</span>
+            </div>
+            <span id="thRepairedStatusBadge" class="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded font-mono font-semibold">Awaiting Repair</span>
+          </div>
+          <pre class="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70"><code id="thRepairedCodeView"># Corrected implementation will appear here after Self-Healing
+# Watch AI fix this code in real time...</code></pre>
+        </div>
+      </div>
+
+      <!-- Real-Time Sandbox Terminal Console -->
+      <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-3.5 py-2 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">sandbox-runner@pandavs (Python 3.12 Isolated Execution)</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500">Live Telemetry</span>
+        </div>
+        <div id="thConsoleOutput" class="p-3.5 text-[11px] font-mono text-slate-300 bg-slate-950/90 h-44 overflow-y-auto space-y-1 leading-relaxed">
+          <div class="text-slate-500">[Theater Ready] Click "Watch AI Fix Its Own Code" to launch real execution pipeline.</div>
+        </div>
+      </div>
+
+      <!-- Verification Result & Attribution Bar -->
+      <div id="thResultBanner" class="p-4 rounded-xl border border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div id="thResultIconBox" class="p-2 rounded-lg bg-slate-800 text-slate-400">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div id="thResultTitle" class="text-xs font-bold text-white uppercase tracking-wider">Ready for Execution</div>
+            <p id="thResultDesc" class="text-[11px] text-slate-400">All tests will be executed inside a clean subprocess sandbox.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="thProviderPill" class="text-[11px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md font-mono">Provider: —</span>
+          <span id="thDurationPill" class="text-[11px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md font-mono">Latency: —</span>
+          <span id="thTestStatusPill" class="text-[11px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md font-mono">Tests: —</span>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>Real execution: No mocked results, no fabricated traces.</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeSelfHealTheater()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition">
+            Close Theater
+          </button>
+          <button type="button" id="thAddToDeckBtn" onclick="addVerifiedExampleToDeck()" disabled class="text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-md transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Add Verified Example to Deck</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Slide AI Regeneration Modal -->
   <div id="regenModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -964,6 +1177,292 @@
         document.getElementById('upgradeChangeCount').innerText = `Modified Snippets: ${diff.changes_count}`;
         loadDeck(currentDeck.deck_id);
       }
+    }
+
+    // ===================================================================
+    // AI Code Verification & Self-Healing Theater Logic
+    // ===================================================================
+    let selectedTheaterExample = 'python_add';
+    let activeTheaterRunId = null;
+    let theaterEventSource = null;
+
+    const THEATER_PRESETS = {
+      python_add: {
+        name: "Arithmetic Operator Bug",
+        code: `def add(a: int, b: int) -> int:\n    """Adds two integers and returns their sum."""\n    return a - b`
+      },
+      python_boundary: {
+        name: "Off-by-One Loop Boundary Bug",
+        code: `def sum_to_n(n: int) -> int:\n    """Calculates the sum of integers from 1 up to and including n."""\n    total = 0\n    for i in range(1, n):\n        total += i\n    return total`
+      },
+      python_syntax: {
+        name: "Missing Colon Syntax Error",
+        code: `def greet(name: str) -> str\n    return f"Hello, {name}!"`
+      }
+    };
+
+    function openSelfHealTheater() {
+      document.getElementById('selfHealTheaterModal').classList.remove('hidden');
+      selectTheaterExample(selectedTheaterExample);
+      lucide.createIcons();
+    }
+
+    function closeSelfHealTheater() {
+      if (theaterEventSource) {
+        theaterEventSource.close();
+        theaterEventSource = null;
+      }
+      document.getElementById('selfHealTheaterModal').classList.add('hidden');
+    }
+
+    function selectTheaterExample(exId) {
+      selectedTheaterExample = exId;
+      ['python_add', 'python_boundary', 'python_syntax'].forEach(id => {
+        const btn = document.getElementById(`thExBtn-${id}`);
+        if (!btn) return;
+        if (id === exId) {
+          btn.className = 'text-xs px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-500/20 text-indigo-300 font-semibold transition';
+        } else {
+          btn.className = 'text-xs px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition';
+        }
+      });
+      resetTheater();
+    }
+
+    function resetTheater() {
+      if (theaterEventSource) {
+        theaterEventSource.close();
+        theaterEventSource = null;
+      }
+      activeTheaterRunId = null;
+      const ex = THEATER_PRESETS[selectedTheaterExample] || THEATER_PRESETS.python_add;
+      document.getElementById('thOriginalCodeView').innerText = ex.code;
+      document.getElementById('thRepairedCodeView').innerText = "# Corrected implementation will appear here after Self-Healing\n# Watch AI fix this code in real time...";
+      document.getElementById('thRepairedStatusBadge').className = 'text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded font-mono font-semibold';
+      document.getElementById('thRepairedStatusBadge').innerText = 'Awaiting Repair';
+      document.getElementById('theaterProgressPct').innerText = '0%';
+      document.getElementById('thConsoleOutput').innerHTML = '<div class="text-slate-500">[Theater Ready] Click "Watch AI Fix Its Own Code" to launch real execution pipeline.</div>';
+      document.getElementById('thResultBanner').className = 'p-4 rounded-xl border border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-3';
+      document.getElementById('thResultIconBox').className = 'p-2 rounded-lg bg-slate-800 text-slate-400';
+      document.getElementById('thResultIconBox').innerHTML = '<i data-lucide="shield" class="w-5 h-5"></i>';
+      document.getElementById('thResultTitle').innerText = 'Ready for Execution';
+      document.getElementById('thResultDesc').innerText = 'All tests will be executed inside a clean subprocess sandbox.';
+      document.getElementById('thProviderPill').innerText = 'Provider: —';
+      document.getElementById('thDurationPill').innerText = 'Latency: —';
+      document.getElementById('thTestStatusPill').innerText = 'Tests: —';
+      document.getElementById('thAddToDeckBtn').disabled = true;
+      document.getElementById('startTheaterBtn').disabled = false;
+      document.getElementById('startTheaterBtn').innerHTML = '<i data-lucide="play" class="w-4 h-4"></i><span>Watch AI Fix Its Own Code</span>';
+
+      for (let i = 1; i <= 6; i++) {
+        const step = document.getElementById(`thStep-${i}`);
+        const status = document.getElementById(`thStepStatus-${i}`);
+        if (step && status) {
+          step.className = 'p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-center space-y-1 transition-all';
+          status.className = 'text-[10px] text-slate-500';
+          status.innerText = i === 1 ? 'Loaded' : 'Pending';
+        }
+      }
+      lucide.createIcons();
+    }
+
+    function appendTheaterLog(msg, colorClass = 'text-slate-300') {
+      const box = document.getElementById('thConsoleOutput');
+      const time = new Date().toISOString().substring(11, 19);
+      const div = document.createElement('div');
+      div.className = `${colorClass} flex items-start gap-2`;
+      div.innerHTML = `<span class="text-slate-600 select-none">[${time}]</span><span>${msg}</span>`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setStepState(stepNum, state, labelText) {
+      const step = document.getElementById(`thStep-${stepNum}`);
+      const status = document.getElementById(`thStepStatus-${stepNum}`);
+      if (!step || !status) return;
+      if (state === 'active') {
+        step.className = 'p-2.5 rounded-lg border border-indigo-500 bg-indigo-950/60 text-center space-y-1 transition-all shadow-md shadow-indigo-500/20';
+        status.className = 'text-[10px] text-indigo-400 font-semibold';
+        status.innerText = labelText || 'Running...';
+      } else if (state === 'failed') {
+        step.className = 'p-2.5 rounded-lg border border-rose-500 bg-rose-950/60 text-center space-y-1 transition-all shadow-md shadow-rose-500/20';
+        status.className = 'text-[10px] text-rose-400 font-semibold';
+        status.innerText = labelText || 'Failed';
+      } else if (state === 'passed') {
+        step.className = 'p-2.5 rounded-lg border border-emerald-500 bg-emerald-950/60 text-center space-y-1 transition-all shadow-md shadow-emerald-500/20';
+        status.className = 'text-[10px] text-emerald-400 font-semibold';
+        status.innerText = labelText || 'Passed';
+      } else if (state === 'done') {
+        step.className = 'p-2.5 rounded-lg border border-slate-700 bg-slate-800/80 text-center space-y-1 transition-all';
+        status.className = 'text-[10px] text-slate-400';
+        status.innerText = labelText || 'Done';
+      }
+    }
+
+    async function startSelfHealTheaterDemo() {
+      const startBtn = document.getElementById('startTheaterBtn');
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Executing in Sandbox...</span>';
+      lucide.createIcons();
+
+      resetTheater();
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Executing in Sandbox...</span>';
+      appendTheaterLog(`Initializing controlled failure demo: ${selectedTheaterExample}`, 'text-indigo-400');
+
+      try {
+        const resp = await fetch('/api/self-heal/demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ example_id: selectedTheaterExample })
+        });
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.detail || 'Failed to start self-healing demo');
+        }
+        const data = await resp.json();
+        activeTheaterRunId = data.run_id;
+        appendTheaterLog(`Sandbox run initialized: ${data.run_id}`, 'text-slate-400');
+
+        // Connect to SSE stream
+        theaterEventSource = new EventSource(`/api/self-heal/${activeTheaterRunId}/events`);
+        theaterEventSource.onmessage = (event) => {
+          try {
+            const ev = JSON.parse(event.data);
+            handleTheaterEvent(ev);
+          } catch (e) {
+            console.error('SSE parse error:', e);
+          }
+        };
+        theaterEventSource.onerror = (err) => {
+          if (theaterEventSource) theaterEventSource.close();
+          // Fall back to polling run state if SSE disconnects
+          fetch(`/api/self-heal/${activeTheaterRunId}`)
+            .then(r => r.json())
+            .then(run => {
+              if (run.stage === 'complete' || run.stage === 'failed') {
+                handleTheaterRunCompleted(run);
+              }
+            })
+            .catch(() => {});
+        };
+      } catch (err) {
+        appendTheaterLog(`Error: ${err.message}`, 'text-rose-400');
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i><span>Watch AI Fix Its Own Code</span>';
+        lucide.createIcons();
+      }
+    }
+
+    function handleTheaterEvent(ev) {
+      document.getElementById('theaterProgressPct').innerText = `${ev.progress}%`;
+
+      if (ev.stage === 'initializing') {
+        setStepState(1, 'passed', 'Loaded');
+        setStepState(2, 'active', 'Spinning up...');
+        appendTheaterLog(ev.message, 'text-sky-300');
+      } else if (ev.stage === 'executing_original') {
+        setStepState(2, 'active', 'Running tests');
+        appendTheaterLog(ev.message, 'text-sky-300');
+        appendTheaterLog('python solution.py (Running test harness)', 'text-slate-500 font-mono');
+      } else if (ev.stage === 'verification_failed') {
+        setStepState(2, 'done', 'Executed');
+        setStepState(3, 'failed', 'Assertion Error');
+        appendTheaterLog(`[Sandbox Execution FAILED] Return Code: ${ev.meta.returncode || 1}`, 'text-rose-400 font-bold');
+        if (ev.meta.stderr) {
+          const lines = ev.meta.stderr.trim().split('\n');
+          lines.forEach(l => appendTheaterLog(`  ${l}`, 'text-rose-300'));
+        }
+        setStepState(4, 'active', 'Analyzing error...');
+      } else if (ev.stage === 'repairing') {
+        setStepState(3, 'done', 'Analyzed');
+        setStepState(4, 'active', 'Fixing code...');
+        appendTheaterLog(ev.message, 'text-amber-300');
+        if (ev.meta && ev.meta.repaired_code) {
+          document.getElementById('thRepairedCodeView').innerText = ev.meta.repaired_code;
+          document.getElementById('thRepairedStatusBadge').className = 'text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-semibold';
+          document.getElementById('thRepairedStatusBadge').innerText = `Candidate Generated (${ev.meta.repair_provider})`;
+          setStepState(4, 'passed', 'Proposed');
+          setStepState(5, 'active', 'Re-testing...');
+        }
+      } else if (ev.stage === 'executing_repair') {
+        setStepState(5, 'active', 'Re-testing...');
+        appendTheaterLog(ev.message, 'text-sky-300');
+      } else if (ev.stage === 'verification_passed') {
+        setStepState(5, 'passed', 'Passed');
+        setStepState(6, 'passed', 'VERIFIED');
+        appendTheaterLog(`[Sandbox Re-Verification PASSED] Return Code: 0`, 'text-emerald-400 font-bold');
+        appendTheaterLog(`All assertions passed successfully in ${ev.meta.duration_ms || 0} ms`, 'text-emerald-300');
+
+        // Update Repaired Code Card
+        document.getElementById('thRepairedStatusBadge').className = 'text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-semibold';
+        document.getElementById('thRepairedStatusBadge').innerText = 'VERIFIED — PASSED';
+
+        // Update Result Banner
+        document.getElementById('thResultBanner').className = 'p-4 rounded-xl border border-emerald-500/50 bg-emerald-950/40 flex flex-wrap items-center justify-between gap-3 shadow-lg shadow-emerald-500/10';
+        document.getElementById('thResultIconBox').className = 'p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        document.getElementById('thResultIconBox').innerHTML = '<i data-lucide="check-circle-2" class="w-5 h-5"></i>';
+        document.getElementById('thResultTitle').innerText = 'VERIFIED — ALL TESTS PASSED';
+        document.getElementById('thResultDesc').innerText = 'Repaired code successfully met all specification assertions in isolated sandbox.';
+
+        document.getElementById('thAddToDeckBtn').disabled = false;
+        lucide.createIcons();
+      } else if (ev.stage === 'verification_failed_final') {
+        setStepState(5, 'failed', 'Failed');
+        setStepState(6, 'failed', 'Unverified');
+        appendTheaterLog(ev.message, 'text-rose-400');
+        document.getElementById('thResultBanner').className = 'p-4 rounded-xl border border-rose-500/50 bg-rose-950/40 flex flex-wrap items-center justify-between gap-3';
+        document.getElementById('thResultIconBox').className = 'p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        document.getElementById('thResultIconBox').innerHTML = '<i data-lucide="x-circle" class="w-5 h-5"></i>';
+        document.getElementById('thResultTitle').innerText = 'VERIFICATION FAILED';
+        document.getElementById('thResultDesc').innerText = 'Repaired candidate did not satisfy test assertions.';
+        lucide.createIcons();
+      } else if (ev.stage === 'complete') {
+        if (theaterEventSource) theaterEventSource.close();
+        const startBtn = document.getElementById('startTheaterBtn');
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i data-lucide="rotate-ccw" class="w-4 h-4"></i><span>Rerun Demo</span>';
+        if (ev.meta) {
+          if (ev.meta.repair_provider) {
+            document.getElementById('thProviderPill').innerText = `Provider: ${ev.meta.repair_provider} (${ev.meta.repair_model || 'rule'})`;
+          }
+        }
+        appendTheaterLog('Pipeline complete. Theater ready.', 'text-emerald-400 font-semibold');
+        lucide.createIcons();
+      }
+    }
+
+    async function addVerifiedExampleToDeck() {
+      if (!activeTheaterRunId) return;
+      const addBtn = document.getElementById('thAddToDeckBtn');
+      addBtn.disabled = true;
+      addBtn.innerHTML = '<i data-lucide="rotate-cw" class="w-4 h-4 animate-spin"></i><span>Adding Slide...</span>';
+      lucide.createIcons();
+
+      try {
+        const targetDeck = currentDeck ? currentDeck.deck_id : 'd_001';
+        const resp = await fetch(`/api/self-heal/${activeTheaterRunId}/add-to-deck`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deck_id: targetDeck })
+        });
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || 'Could not add to deck');
+        }
+        const data = await resp.json();
+        addBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-300"></i><span>Added to Deck!</span>';
+        appendTheaterLog(`Verified slide ${data.slide_id} added to deck ${data.deck_id}!`, 'text-emerald-300 font-bold');
+        await loadDeck(data.deck_id);
+        activeIndex = currentDeck.slides.length - 1;
+        renderActiveSlide();
+        alert(`Success! Verified slide "${data.slide_title}" was added to presentation deck ${data.deck_id}.`);
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        addBtn.disabled = false;
+        addBtn.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i><span>Add Verified Example to Deck</span>';
+      }
+      lucide.createIcons();
     }
 
     window.addEventListener('DOMContentLoaded', () => {

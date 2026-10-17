@@ -20,12 +20,15 @@ from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, HTM
 from apps.api.config import settings
 from apps.api.models import (
     CreateDeckRequest, VerifyRequest, VerifyResponse,
-    RegenerateSlideRequest, UpgradeFrameworkRequest
+    RegenerateSlideRequest, UpgradeFrameworkRequest,
+    StartSelfHealRequest, AddToDeckRequest
 )
 from apps.api.store import DeckStore
-from apps.api.generator import CourseGenerator
+from apps.api.generator import CourseGenerator, _patch_deck
 from apps.api.generator import check_ollama_health as _check_ollama_health
 from apps.api.schema_util import deck_errors
+from services.verifier.theater import theater_service, DEMO_EXAMPLES
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -264,6 +267,142 @@ def export_deck(deck_id: str, format: str = Query("pptx")):
 def list_decks():
     """List all generated and cached decks."""
     return store.list_decks()
+
+
+# ===================================================================
+# AI Code Verification & Self-Healing Theater Endpoints
+# ===================================================================
+
+@app.get("/api/self-heal/examples")
+def list_self_heal_examples():
+    """Returns allowlisted controlled failure demo examples."""
+    return [
+        {
+            "id": ex["id"],
+            "name": ex["name"],
+            "description": ex["description"],
+            "lang": ex["lang"],
+            "version": ex["version"],
+            "original_code": ex["original_code"],
+            "test_code": ex["test_code"],
+        }
+        for ex in DEMO_EXAMPLES.values()
+    ]
+
+
+@app.post("/api/self-heal/demo", status_code=202)
+async def start_self_heal_demo(
+    background_tasks: BackgroundTasks,
+    req: Optional[StartSelfHealRequest] = None,
+):
+    """
+    Starts a controlled failure demonstration and launches real sandbox execution
+    and self-healing in the background.
+    """
+    example_id = req.example_id if (req and req.example_id) else "python_add"
+    try:
+        run = theater_service.create_run(example_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    background_tasks.add_task(theater_service.run_theater_pipeline, run["run_id"])
+    return {
+        "status": "started",
+        "run_id": run["run_id"],
+        "example_id": example_id,
+        "example_name": run["example_name"],
+        "demo_type": run["demo_type"],
+    }
+
+
+@app.get("/api/self-heal/{run_id}")
+def get_self_heal_run(run_id: str):
+    """Returns current status, execution results, diff, and logs for a self-heal run."""
+    run = theater_service.runs.get(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Self-heal run '{run_id}' not found")
+    return run
+
+
+@app.get("/api/self-heal/{run_id}/events")
+async def stream_self_heal_events(run_id: str):
+    """Streams real-time SSE progress events for a self-heal demonstration run."""
+    if run_id not in theater_service.runs:
+        raise HTTPException(status_code=404, detail=f"Self-heal run '{run_id}' not found")
+    return StreamingResponse(
+        theater_service.stream_events(run_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.post("/api/self-heal/{run_id}/add-to-deck")
+def add_self_heal_to_deck(run_id: str, req: Optional[AddToDeckRequest] = None):
+    """
+    Appends the successfully verified repaired snippet to an existing or new course deck.
+    """
+    run = theater_service.runs.get(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Self-heal run '{run_id}' not found")
+    if run.get("verified") != "passed":
+        raise HTTPException(status_code=400, detail="Only successfully verified snippets can be added to course decks.")
+
+    target_deck_id = (req.deck_id if req and req.deck_id else None) or "d_001"
+    deck = store.get_deck(target_deck_id)
+    if not deck:
+        target_deck_id = f"d_{uuid.uuid4().hex[:8]}"
+        deck = {
+            "deck_id": target_deck_id,
+            "topic": f"Verified Code: {run['example_name']}",
+            "level": "intermediate",
+            "minutes": 30,
+            "stack": {run["lang"]: run["version"]},
+            "slides": [],
+            "exercises": [],
+            "quiz": [],
+            "cheat_sheet": "",
+            "meta": {"source": "self-healing-theater"},
+        }
+
+    slide_index = len(deck.get("slides", [])) + 1
+    new_slide = {
+        "id": f"s_{slide_index:03d}",
+        "type": "code",
+        "title": f"Verified: {run['example_name']}",
+        "bullets": [
+            "Self-healed & verified in isolated execution sandbox",
+            f"Repaired via {run.get('repair_provider', 'self-healer')} ({run.get('repair_model', 'unknown')})",
+            "100% test assertions passed",
+        ],
+        "code": [
+            {
+                "id": f"c_{slide_index:03d}_1",
+                "lang": run["lang"],
+                "version": run["version"],
+                "kind": "plain",
+                "source": run["repaired_code"],
+                "verified": "passed",
+                "attempts": run.get("repair_attempts", 1),
+            }
+        ],
+        "diagram": None,
+        "notes": f"Originally failed execution. Repaired via {run.get('repair_provider')} and verified against unit test suite.",
+    }
+    deck["slides"].append(new_slide)
+    deck = _patch_deck(deck, run["lang"], run["version"])
+    store.save_deck(target_deck_id, deck, status="ready")
+
+    return {
+        "status": "added",
+        "deck_id": target_deck_id,
+        "slide_id": new_slide["id"],
+        "slide_title": new_slide["title"],
+        "slides_count": len(deck["slides"]),
+    }
 
 
 if __name__ == "__main__":

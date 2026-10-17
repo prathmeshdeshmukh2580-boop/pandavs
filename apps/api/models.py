@@ -111,3 +111,13 @@ class DeckModel(BaseModel):
     quiz: List[QuizItem] = []
     cheat_sheet: str = ""
     meta: Optional[Dict[str, Any]] = None
+
+
+# ---------- Self-Healing Theater Models ----------
+
+class StartSelfHealRequest(BaseModel):
+    example_id: Optional[str] = Field("python_add", json_schema_extra={"example": "python_add"})
+
+
+class AddToDeckRequest(BaseModel):
+    deck_id: Optional[str] = Field(None, json_schema_extra={"example": "d_001"})

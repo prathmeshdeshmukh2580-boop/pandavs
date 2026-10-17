@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import {
   Play,
   RotateCw,
+  RotateCcw,
+  PlusCircle,
+  X,
   Download,
   FileCheck2,
   Cpu,
@@ -45,6 +48,111 @@ export default function StudioDashboard() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeDiff, setUpgradeDiff] = useState<any>(null);
+
+  // Self-Healing Theater State
+  const [showTheaterModal, setShowTheaterModal] = useState(false);
+  const [theaterExample, setTheaterExample] = useState<"python_add" | "python_boundary" | "python_syntax">("python_add");
+  const [theaterRunId, setTheaterRunId] = useState<string | null>(null);
+  const [theaterRunning, setTheaterRunning] = useState(false);
+  const [theaterStage, setTheaterStage] = useState<string>("idle");
+  const [theaterProgress, setTheaterProgress] = useState(0);
+  const [theaterLogs, setTheaterLogs] = useState<string[]>([
+    "[Theater Ready] Click 'Watch AI Fix Its Own Code' to launch real execution pipeline."
+  ]);
+  const [theaterRepairedCode, setTheaterRepairedCode] = useState<string>("");
+  const [theaterVerifiedStatus, setTheaterVerifiedStatus] = useState<"idle" | "verifying" | "passed" | "failed">("idle");
+  const [theaterMeta, setTheaterMeta] = useState<any>(null);
+  const [isAddingToDeck, setIsAddingToDeck] = useState(false);
+
+  const THEATER_PRESETS = {
+    python_add: {
+      name: "Arithmetic Operator Bug",
+      code: `def add(a: int, b: int) -> int:\n    """Adds two integers and returns their sum."""\n    return a - b`
+    },
+    python_boundary: {
+      name: "Off-by-One Loop Boundary Bug",
+      code: `def sum_to_n(n: int) -> int:\n    """Calculates the sum of integers from 1 up to and including n."""\n    total = 0\n    for i in range(1, n):\n        total += i\n    return total`
+    },
+    python_syntax: {
+      name: "Missing Colon Syntax Error",
+      code: `def greet(name: str) -> str\n    return f"Hello, {name}!"`
+    }
+  };
+
+  const startTheaterDemo = async () => {
+    setTheaterRunning(true);
+    setTheaterStage("initializing");
+    setTheaterProgress(10);
+    setTheaterVerifiedStatus("verifying");
+    setTheaterRepairedCode("");
+    setTheaterMeta(null);
+    setTheaterLogs([`[Initiating] Starting controlled failure demo: ${theaterExample}...`]);
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/self-heal/demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ example_id: theaterExample }),
+      });
+      if (!resp.ok) throw new Error("Failed to start self-healing run");
+      const { run_id } = await resp.json();
+      setTheaterRunId(run_id);
+
+      const sse = new EventSource(`${API_BASE}/api/self-heal/${run_id}/events`);
+      sse.onmessage = (event) => {
+        try {
+          const ev = JSON.parse(event.data);
+          setTheaterProgress(ev.progress);
+          setTheaterStage(ev.stage);
+          setTheaterLogs((prev) => [...prev, `[${ev.stage.toUpperCase()}] ${ev.message}`]);
+
+          if (ev.meta && ev.meta.repaired_code) {
+            setTheaterRepairedCode(ev.meta.repaired_code);
+          }
+          if (ev.stage === "verification_passed") {
+            setTheaterVerifiedStatus("passed");
+            setTheaterMeta(ev.meta);
+          } else if (ev.stage === "verification_failed_final") {
+            setTheaterVerifiedStatus("failed");
+          } else if (ev.stage === "complete") {
+            sse.close();
+            setTheaterRunning(false);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      sse.onerror = () => {
+        sse.close();
+        setTheaterRunning(false);
+      };
+    } catch (err: any) {
+      setTheaterRunning(false);
+      setTheaterLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
+    }
+  };
+
+  const addTheaterToDeck = async () => {
+    if (!theaterRunId || theaterVerifiedStatus !== "passed") return;
+    setIsAddingToDeck(true);
+    try {
+      const targetDeck = deck ? deck.deck_id : "d_001";
+      const resp = await fetch(`${API_BASE}/api/self-heal/${theaterRunId}/add-to-deck`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deck_id: targetDeck }),
+      });
+      if (!resp.ok) throw new Error("Could not add to deck");
+      const data = await resp.json();
+      await loadDeck(data.deck_id);
+      alert(`Success! Verified slide "${data.slide_title}" added to deck.`);
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsAddingToDeck(false);
+    }
+  };
+
 
   // Load initial demo deck
   useEffect(() => {
@@ -202,6 +310,13 @@ export default function StudioDashboard() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setShowTheaterModal(true)}
+            className="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/25 transition"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Watch AI Fix Its Own Code</span>
+          </button>
+          <button
             onClick={() => loadDeck("d_001")}
             className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
           >
@@ -234,6 +349,36 @@ export default function StudioDashboard() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1600px] mx-auto w-full">
         {/* Left Column: Generator Configuration & Pipeline Monitor (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* AI Code Verification & Self-Healing Theater Card */}
+          <div className="bg-gradient-to-br from-indigo-950/70 via-slate-900 to-purple-950/50 border border-indigo-500/40 rounded-xl p-5 shadow-lg space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                    AI Code Verification & Self-Healing
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-semibold uppercase">
+                      Live Theater
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Watch Pandavs detect, repair, and re-verify faulty code automatically.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowTheaterModal(true)}
+              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-xs"
+            >
+              <Play className="w-3.5 h-3.5 text-white" />
+              <span>Watch AI Fix Its Own Code</span>
+            </button>
+          </div>
+
           {/* Generation Form Card */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
@@ -736,6 +881,343 @@ export default function StudioDashboard() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Code Verification & Self-Healing Theater Modal */}
+      {showTheaterModal && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
+                  <Sparkles className="w-6 h-6 text-amber-300" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white tracking-tight">
+                      AI Code Verification & Self-Healing Theater
+                    </h3>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold uppercase">
+                      Controlled Failure Demo
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Watch Pandavs detect, repair, and re-verify faulty code automatically in real time.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTheaterModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scenario Selector & Controls */}
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">
+                  Scenario:
+                </span>
+                {(["python_add", "python_boundary", "python_syntax"] as const).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      setTheaterExample(id);
+                      setTheaterStage("idle");
+                      setTheaterProgress(0);
+                      setTheaterVerifiedStatus("idle");
+                      setTheaterRepairedCode("");
+                      setTheaterMeta(null);
+                      setTheaterLogs([
+                        `[Preset Selected] ${THEATER_PRESETS[id].name}. Click "Watch AI Fix Its Own Code" to launch.`
+                      ]);
+                    }}
+                    className={`text-xs px-3 py-1.5 rounded-lg border transition ${
+                      theaterExample === id
+                        ? "border-indigo-500 bg-indigo-500/20 text-indigo-300 font-semibold"
+                        : "border-slate-800 bg-slate-900 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {THEATER_PRESETS[id].name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheaterStage("idle");
+                    setTheaterProgress(0);
+                    setTheaterVerifiedStatus("idle");
+                    setTheaterRepairedCode("");
+                    setTheaterMeta(null);
+                    setTheaterLogs([
+                      "[Theater Ready] Click 'Watch AI Fix Its Own Code' to launch real execution pipeline."
+                    ]);
+                  }}
+                  className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg flex items-center gap-1.5 transition"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={startTheaterDemo}
+                  disabled={theaterRunning}
+                  className="text-xs bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition"
+                >
+                  {theaterRunning ? (
+                    <>
+                      <RotateCw className="w-4 h-4 animate-spin" />
+                      <span>Verifying in Sandbox...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      <span>Watch AI Fix Its Own Code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Pipeline Timeline */}
+            <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <span className="uppercase tracking-wider text-[11px] font-semibold text-slate-400">
+                  Live Pipeline Timeline
+                </span>
+                <span className="font-bold text-indigo-400 font-mono">{theaterProgress}%</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterStage !== "idle" ? "border-emerald-500 bg-emerald-950/60" : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 1</div>
+                  <div className="text-xs font-semibold text-slate-300">Faulty Code</div>
+                  <div className="text-[10px] text-emerald-400">Loaded</div>
+                </div>
+
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterStage === "executing_original"
+                    ? "border-indigo-500 bg-indigo-950/60 shadow-md shadow-indigo-500/20"
+                    : theaterProgress >= 45
+                    ? "border-slate-700 bg-slate-800/80"
+                    : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 2</div>
+                  <div className="text-xs font-semibold text-slate-300">Sandbox Test</div>
+                  <div className="text-[10px] text-slate-400">
+                    {theaterStage === "executing_original" ? "Executing..." : theaterProgress >= 45 ? "Executed" : "Pending"}
+                  </div>
+                </div>
+
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterStage === "verification_failed"
+                    ? "border-rose-500 bg-rose-950/60 shadow-md shadow-rose-500/20"
+                    : theaterProgress >= 65
+                    ? "border-slate-700 bg-slate-800/80"
+                    : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 3</div>
+                  <div className="text-xs font-semibold text-slate-300">Failure Trace</div>
+                  <div className="text-[10px] text-rose-400">
+                    {theaterProgress >= 45 ? "Error Caught" : "Pending"}
+                  </div>
+                </div>
+
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterStage === "repairing"
+                    ? "border-amber-500 bg-amber-950/60 shadow-md shadow-amber-500/20"
+                    : theaterProgress >= 85
+                    ? "border-emerald-500 bg-emerald-950/60"
+                    : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 4</div>
+                  <div className="text-xs font-semibold text-slate-300">Self-Healing</div>
+                  <div className="text-[10px] text-amber-400">
+                    {theaterStage === "repairing" ? "Repairing..." : theaterProgress >= 85 ? "Repaired" : "Pending"}
+                  </div>
+                </div>
+
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterStage === "executing_repair"
+                    ? "border-indigo-500 bg-indigo-950/60 shadow-md shadow-indigo-500/20"
+                    : theaterProgress >= 95
+                    ? "border-emerald-500 bg-emerald-950/60"
+                    : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 5</div>
+                  <div className="text-xs font-semibold text-slate-300">Re-Verification</div>
+                  <div className="text-[10px] text-emerald-400">
+                    {theaterStage === "executing_repair" ? "Testing..." : theaterProgress >= 95 ? "Passed" : "Pending"}
+                  </div>
+                </div>
+
+                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
+                  theaterVerifiedStatus === "passed"
+                    ? "border-emerald-500 bg-emerald-950/60 shadow-md shadow-emerald-500/20"
+                    : theaterVerifiedStatus === "failed"
+                    ? "border-rose-500 bg-rose-950/60"
+                    : "border-slate-800 bg-slate-900"
+                }`}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 6</div>
+                  <div className="text-xs font-semibold text-slate-300">VERIFIED</div>
+                  <div className="text-[10px] text-emerald-400">
+                    {theaterVerifiedStatus === "passed" ? "100% Passed" : theaterVerifiedStatus === "failed" ? "Failed" : "Pending"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Code Comparison */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-950 rounded-xl border border-rose-500/30 overflow-hidden flex flex-col">
+                <div className="bg-rose-950/40 border-b border-rose-500/30 px-3.5 py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-rose-300 tracking-tight">Original Code — Failed</span>
+                  </div>
+                  <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded font-mono font-semibold">
+                    Assertion Failure
+                  </span>
+                </div>
+                <pre className="p-4 text-xs font-mono text-rose-200 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70">
+                  <code>{THEATER_PRESETS[theaterExample].code}</code>
+                </pre>
+              </div>
+
+              <div className="bg-slate-950 rounded-xl border border-emerald-500/30 overflow-hidden flex flex-col">
+                <div className="bg-emerald-950/40 border-b border-emerald-500/30 px-3.5 py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span className="text-xs font-bold text-emerald-300 tracking-tight">Corrected Code — Re-Verified</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold border ${
+                    theaterVerifiedStatus === "passed"
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-slate-800 text-slate-400 border-slate-700"
+                  }`}>
+                    {theaterVerifiedStatus === "passed" ? "VERIFIED — PASSED" : "Awaiting Repair"}
+                  </span>
+                </div>
+                <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70">
+                  <code>
+                    {theaterRepairedCode ||
+                      "# Corrected implementation will appear here after Self-Healing\n# Watch AI fix this code in real time..."}
+                  </code>
+                </pre>
+              </div>
+            </div>
+
+            {/* Sandbox Console */}
+            <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
+              <div className="bg-slate-900/90 border-b border-slate-800 px-3.5 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">sandbox-runner@pandavs (Python 3.12 Isolated Execution)</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500">Live Telemetry</span>
+              </div>
+              <div className="p-3.5 text-[11px] font-mono text-slate-300 bg-slate-950/90 h-44 overflow-y-auto space-y-1 leading-relaxed">
+                {theaterLogs.map((log, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <span className="text-slate-600 select-none">[{idx + 1}]</span>
+                    <span className={log.includes("ERROR") || log.includes("FAILED") ? "text-rose-400" : log.includes("PASSED") || log.includes("VERIFIED") ? "text-emerald-400 font-semibold" : "text-slate-300"}>
+                      {log}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Verification Result Banner */}
+            <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
+              theaterVerifiedStatus === "passed"
+                ? "border-emerald-500/50 bg-emerald-950/40 shadow-lg shadow-emerald-500/10"
+                : theaterVerifiedStatus === "failed"
+                ? "border-rose-500/50 bg-rose-950/40"
+                : "border-slate-800 bg-slate-950"
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${
+                  theaterVerifiedStatus === "passed"
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : theaterVerifiedStatus === "failed"
+                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
+                    : "bg-slate-800 text-slate-400"
+                }`}>
+                  {theaterVerifiedStatus === "passed" ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : theaterVerifiedStatus === "failed" ? (
+                    <XCircle className="w-5 h-5" />
+                  ) : (
+                    <ShieldCheck className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white uppercase tracking-wider">
+                    {theaterVerifiedStatus === "passed"
+                      ? "VERIFIED — ALL TESTS PASSED"
+                      : theaterVerifiedStatus === "failed"
+                      ? "VERIFICATION FAILED"
+                      : "Ready for Sandbox Execution"}
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    {theaterVerifiedStatus === "passed"
+                      ? "Repaired code met 100% of specification assertions in clean subprocess sandbox."
+                      : "All tests run inside an isolated subprocess with zero mock data."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono">
+                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
+                  Provider: {theaterMeta?.repair_provider || "—"}
+                </span>
+                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
+                  Duration: {theaterMeta?.duration_ms ? `${theaterMeta.duration_ms} ms` : "—"}
+                </span>
+                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
+                  Sandbox: Python 3.12 Isolated
+                </span>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+              <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                <span className="text-emerald-400">●</span>
+                <span>Genuine subprocess execution: Real assertions, real error trace, real repair.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTheaterModal(false)}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition"
+                >
+                  Close Theater
+                </button>
+                <button
+                  type="button"
+                  onClick={addTheaterToDeck}
+                  disabled={theaterVerifiedStatus !== "passed" || isAddingToDeck}
+                  className="text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-md transition"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>{isAddingToDeck ? "Adding..." : "Add Verified Example to Deck"}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
