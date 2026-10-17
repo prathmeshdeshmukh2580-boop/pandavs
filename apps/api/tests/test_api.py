@@ -78,3 +78,13 @@ def test_export_pptx():
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     assert len(response.content) > 1000
+
+def test_get_deck_notes():
+    response = client.get("/decks/d_001/notes")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["deck_id"] == "d_001"
+    assert "trainer_notes" in data
+    assert "student_notes" in data
+    assert len(data["trainer_notes"]) > 0
+    assert data["organization"] == "TechSummitTrainers"

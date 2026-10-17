@@ -269,6 +269,19 @@ def list_decks():
     return store.list_decks()
 
 
+@app.get("/decks/{deck_id}/notes")
+def get_deck_notes(deck_id: str):
+    """Retrieve structured trainer and student notes for a course deck."""
+    deck = store.get_deck(deck_id)
+    if not deck:
+        raise HTTPException(status_code=404, detail=f"Deck '{deck_id}' not found")
+    if _orchestrator is not None:
+        return _orchestrator.exporter.export_notes(deck)
+    from services.renderer.exporter import Exporter
+    exporter = Exporter(str(settings.DATA_DIR / "exports"))
+    return exporter.export_notes(deck)
+
+
 # ===================================================================
 # AI Code Verification & Self-Healing Theater Endpoints
 # ===================================================================

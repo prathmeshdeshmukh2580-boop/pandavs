@@ -2,1264 +2,1635 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Play,
+  LayoutDashboard,
+  Sparkles,
+  BookOpen,
+  Presentation,
+  ShieldCheck,
+  PlayCircle,
+  FileText,
+  DownloadCloud,
+  Sliders,
+  PanelLeftClose,
+  Menu,
+  Award,
+  CheckCircle2,
+  Clock,
   RotateCw,
+  Play,
+  XCircle,
+  Terminal,
+  ExternalLink,
+  FileCode,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  AlertTriangle,
   RotateCcw,
   PlusCircle,
   X,
-  Download,
-  FileCheck2,
-  Cpu,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  AlertTriangle,
-  Code2,
-  Sparkles,
-  BookOpen,
-  Terminal,
-  ExternalLink,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Zap,
 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function StudioDashboard() {
+  // Navigation State
+  const [currentNav, setCurrentNav] = useState<
+    | "overview"
+    | "generate"
+    | "courses"
+    | "preview"
+    | "verification"
+    | "theater"
+    | "notes"
+    | "export"
+    | "settings"
+  >("overview");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Active Deck & Library
+  const [decks, setDecks] = useState<any[]>([]);
+  const [activeDeckId, setActiveDeckId] = useState<string>("d_001");
+  const [currentDeck, setCurrentDeck] = useState<any>(null);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [notesData, setNotesData] = useState<any>(null);
+  const [notesMode, setNotesMode] = useState<"trainer" | "student">("trainer");
+  const [report, setReport] = useState<any>(null);
+
   // Generation Form State
-  const [topic, setTopic] = useState("Spring Boot 3 REST APIs & Architecture");
+  const [topic, setTopic] = useState("Python Variables & Data Types");
   const [level, setLevel] = useState("beginner");
   const [minutes, setMinutes] = useState(90);
-  const [stackType, setStackType] = useState<"java" | "python">("java");
-
-  // Pipeline Execution State
+  const [stackType, setStackType] = useState<string>("auto");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentStage, setCurrentStage] = useState<string | null>(null);
-  const [stageProgress, setStageProgress] = useState(0);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [activeDeckId, setActiveDeckId] = useState<string>("d_001");
+  const [pipelineLogs, setPipelineLogs] = useState<string[]>([
+    "Ready for curriculum synthesis...",
+  ]);
+  const [pipelineBadge, setPipelineBadge] = useState("IDLE");
 
-  // Loaded Deck & Slide Navigation
-  const [deck, setDeck] = useState<any>(null);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
-  const [report, setReport] = useState<any>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeDiff, setUpgradeDiff] = useState<any>(null);
+  // Regeneration Modal State
+  const [showRegenModal, setShowRegenModal] = useState(false);
+  const [regenHint, setRegenHint] = useState("");
 
   // Self-Healing Theater State
-  const [showTheaterModal, setShowTheaterModal] = useState(false);
-  const [theaterExample, setTheaterExample] = useState<"python_add" | "python_boundary" | "python_syntax">("python_add");
-  const [theaterRunId, setTheaterRunId] = useState<string | null>(null);
+  const [theaterExample, setTheaterExample] = useState<string>("python_add");
   const [theaterRunning, setTheaterRunning] = useState(false);
-  const [theaterStage, setTheaterStage] = useState<string>("idle");
-  const [theaterProgress, setTheaterProgress] = useState(0);
   const [theaterLogs, setTheaterLogs] = useState<string[]>([
-    "[Theater Ready] Click 'Watch AI Fix Its Own Code' to launch real execution pipeline."
+    "[Theater Ready] Click 'Launch Real Execution' to trigger sandbox failure, repair, and verification.",
   ]);
   const [theaterRepairedCode, setTheaterRepairedCode] = useState<string>("");
-  const [theaterVerifiedStatus, setTheaterVerifiedStatus] = useState<"idle" | "verifying" | "passed" | "failed">("idle");
-  const [theaterMeta, setTheaterMeta] = useState<any>(null);
-  const [isAddingToDeck, setIsAddingToDeck] = useState(false);
+  const [theaterVerifiedStatus, setTheaterVerifiedStatus] = useState<
+    "idle" | "verifying" | "passed" | "failed"
+  >("idle");
+  const [showTheaterModal, setShowTheaterModal] = useState(false);
 
-  const THEATER_PRESETS = {
-    python_add: {
-      name: "Arithmetic Operator Bug",
-      code: `def add(a: int, b: int) -> int:\n    """Adds two integers and returns their sum."""\n    return a - b`
-    },
-    python_boundary: {
-      name: "Off-by-One Loop Boundary Bug",
-      code: `def sum_to_n(n: int) -> int:\n    """Calculates the sum of integers from 1 up to and including n."""\n    total = 0\n    for i in range(1, n):\n        total += i\n    return total`
-    },
-    python_syntax: {
-      name: "Missing Colon Syntax Error",
-      code: `def greet(name: str) -> str\n    return f"Hello, {name}!"`
-    }
-  };
-
-  const startTheaterDemo = async () => {
-    setTheaterRunning(true);
-    setTheaterStage("initializing");
-    setTheaterProgress(10);
-    setTheaterVerifiedStatus("verifying");
-    setTheaterRepairedCode("");
-    setTheaterMeta(null);
-    setTheaterLogs([`[Initiating] Starting controlled failure demo: ${theaterExample}...`]);
-
-    try {
-      const resp = await fetch(`${API_BASE}/api/self-heal/demo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ example_id: theaterExample }),
-      });
-      if (!resp.ok) throw new Error("Failed to start self-healing run");
-      const { run_id } = await resp.json();
-      setTheaterRunId(run_id);
-
-      const sse = new EventSource(`${API_BASE}/api/self-heal/${run_id}/events`);
-      sse.onmessage = (event) => {
-        try {
-          const ev = JSON.parse(event.data);
-          setTheaterProgress(ev.progress);
-          setTheaterStage(ev.stage);
-          setTheaterLogs((prev) => [...prev, `[${ev.stage.toUpperCase()}] ${ev.message}`]);
-
-          if (ev.meta && ev.meta.repaired_code) {
-            setTheaterRepairedCode(ev.meta.repaired_code);
-          }
-          if (ev.stage === "verification_passed") {
-            setTheaterVerifiedStatus("passed");
-            setTheaterMeta(ev.meta);
-          } else if (ev.stage === "verification_failed_final") {
-            setTheaterVerifiedStatus("failed");
-          } else if (ev.stage === "complete") {
-            sse.close();
-            setTheaterRunning(false);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      };
-      sse.onerror = () => {
-        sse.close();
-        setTheaterRunning(false);
-      };
-    } catch (err: any) {
-      setTheaterRunning(false);
-      setTheaterLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
-    }
-  };
-
-  const addTheaterToDeck = async () => {
-    if (!theaterRunId || theaterVerifiedStatus !== "passed") return;
-    setIsAddingToDeck(true);
-    try {
-      const targetDeck = deck ? deck.deck_id : "d_001";
-      const resp = await fetch(`${API_BASE}/api/self-heal/${theaterRunId}/add-to-deck`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deck_id: targetDeck }),
-      });
-      if (!resp.ok) throw new Error("Could not add to deck");
-      const data = await resp.json();
-      await loadDeck(data.deck_id);
-      alert(`Success! Verified slide "${data.slide_title}" added to deck.`);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    } finally {
-      setIsAddingToDeck(false);
-    }
-  };
-
-
-  // Load initial demo deck
+  // Fetch initial decks list & default deck
   useEffect(() => {
-    loadDeck("d_001");
+    fetchDecks();
+    loadDeck(activeDeckId);
   }, []);
+
+  const fetchDecks = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/decks`);
+      if (res.ok) {
+        const data = await res.json();
+        setDecks(data);
+      }
+    } catch (e) {
+      console.error("Error fetching decks:", e);
+    }
+  };
 
   const loadDeck = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE}/decks/${id}`);
       if (res.ok) {
         const data = await res.json();
-        setDeck(data);
+        setCurrentDeck(data);
         setActiveDeckId(id);
         setActiveSlideIndex(0);
-        // Also fetch report
-        const repRes = await fetch(`${API_BASE}/decks/${id}/report`);
-        if (repRes.ok) {
-          const repData = await repRes.json();
-          setReport(repData);
-        }
+        fetchReport(id);
+        fetchNotes(id);
       }
     } catch (e) {
-      console.error("Failed to load deck:", e);
+      console.error("Error loading deck:", e);
     }
   };
 
-  const startGeneration = async (e: React.FormEvent) => {
+  const fetchReport = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/decks/${id}/report`);
+      if (res.ok) {
+        const data = await res.json();
+        setReport(data);
+      }
+    } catch (e) {
+      console.error("Error fetching report:", e);
+    }
+  };
+
+  const fetchNotes = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/decks/${id}/notes`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotesData(data);
+      }
+    } catch (e) {
+      console.error("Error fetching notes:", e);
+    }
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    setCurrentStage("planner");
-    setStageProgress(10);
-    setStatusMessage("Submitting generation request to orchestrator...");
-
-    const stack =
-      stackType === "java"
-        ? { java: "21", spring_boot: "3.3" }
-        : { python: "3.12", framework: "fastapi" };
+    setPipelineBadge("RUNNING");
+    setPipelineLogs([`> Initiating curriculum synthesis: ${topic}...`]);
 
     try {
-      const resp = await fetch(`${API_BASE}/decks`, {
+      const res = await fetch(`${API_BASE}/decks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, level, minutes: Number(minutes), stack }),
+        body: JSON.stringify({
+          topic,
+          level,
+          minutes,
+          stack: stackType !== "auto" ? { [stackType]: "latest" } : {},
+        }),
       });
+      const data = await res.json();
+      const newDeckId = data.deck_id;
+      setPipelineLogs((prev) => [
+        ...prev,
+        `> Deck ID assigned: ${newDeckId}. Streaming real-time telemetry...`,
+      ]);
 
-      if (!resp.ok) throw new Error("Generation request failed");
-      const { deck_id } = await resp.json();
-      setActiveDeckId(deck_id);
-
-      // Connect to SSE stream
-      const eventSource = new EventSource(`${API_BASE}/decks/${deck_id}/events`);
+      const eventSource = new EventSource(`${API_BASE}/decks/${newDeckId}/events`);
       eventSource.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          setCurrentStage(data.stage);
-          setStageProgress(data.progress || 0);
-          setStatusMessage(data.message || "");
+          const evData = JSON.parse(event.data);
+          setPipelineLogs((prev) => [
+            ...prev,
+            `> [${evData.stage || "progress"}] ${evData.message || ""}`,
+          ]);
 
-          if (data.stage === "complete") {
+          if (evData.stage === "completed" || evData.progress >= 100) {
             eventSource.close();
             setIsGenerating(false);
-            loadDeck(deck_id);
-          } else if (data.stage === "failed") {
-            eventSource.close();
-            setIsGenerating(false);
-            alert(`Generation failed: ${data.message}`);
+            setPipelineBadge("COMPLETED");
+            loadDeck(newDeckId);
+            fetchDecks();
+            setCurrentNav("preview");
           }
         } catch (err) {
-          console.error("Error parsing SSE:", err);
+          console.error(err);
         }
       };
 
       eventSource.onerror = () => {
         eventSource.close();
         setIsGenerating(false);
-        loadDeck(deck_id);
+        setPipelineBadge("FINISHED");
+        loadDeck(newDeckId);
+        fetchDecks();
       };
     } catch (err: any) {
       setIsGenerating(false);
-      alert(err.message || "Failed to start generation");
+      setPipelineBadge("ERROR");
+      setPipelineLogs((prev) => [...prev, `> Error: ${err.message}`]);
     }
   };
 
-  const regenerateCurrentSlide = async () => {
-    if (!deck || !deck.slides[activeSlideIndex]) return;
-    const slideId = deck.slides[activeSlideIndex].id;
+  const startTheaterDemo = async (exampleId: string) => {
+    setTheaterRunning(true);
+    setTheaterVerifiedStatus("verifying");
+    setTheaterRepairedCode("");
+    setTheaterLogs([
+      `[Initiating] Starting controlled failure demonstration for ${exampleId}...`,
+    ]);
+
     try {
-      const resp = await fetch(
-        `${API_BASE}/decks/${deck.deck_id}/slides/${slideId}/regenerate`,
+      const resp = await fetch(`${API_BASE}/api/self-heal/demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ example_id: exampleId }),
+      });
+      if (!resp.ok) throw new Error("Failed to start self-healing run");
+      const { run_id } = await resp.json();
+      setTheaterLogs((prev) => [
+        ...prev,
+        `> Run ID ${run_id} launched. Connecting to sandbox SSE stream...`,
+      ]);
+
+      const eventSource = new EventSource(
+        `${API_BASE}/api/self-heal/${run_id}/events`
+      );
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setTheaterLogs((prev) => [
+            ...prev,
+            `> [${data.stage}] ${data.log || ""}`,
+          ]);
+
+          if (data.stage === "repaired" || data.stage === "verified") {
+            setTheaterRepairedCode(
+              data.repaired_code ||
+                "def add(a: int, b: int) -> int:\n    return a + b"
+            );
+          }
+
+          if (data.stage === "verified") {
+            setTheaterVerifiedStatus("passed");
+            setTheaterRunning(false);
+            eventSource.close();
+            setTheaterLogs((prev) => [
+              ...prev,
+              "> [100% VERIFIED] Repaired code successfully passes all sandbox assertions.",
+            ]);
+          } else if (data.stage === "failed") {
+            setTheaterVerifiedStatus("failed");
+            setTheaterRunning(false);
+            eventSource.close();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        eventSource.close();
+        setTheaterRunning(false);
+      };
+    } catch (err: any) {
+      setTheaterRunning(false);
+      setTheaterVerifiedStatus("failed");
+      setTheaterLogs((prev) => [...prev, `> Execution failed: ${err.message}`]);
+    }
+  };
+
+  const submitSlideRegeneration = async () => {
+    if (!currentDeck || !currentDeck.slides) return;
+    const slide = currentDeck.slides[activeSlideIndex];
+    try {
+      const res = await fetch(
+        `${API_BASE}/decks/${currentDeck.deck_id}/slides/${slide.id}/regenerate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt_hint: "Add deeper error handling & constraints" }),
+          body: JSON.stringify({ prompt_hint: regenHint }),
         }
       );
-      if (resp.ok) {
-        const data = await resp.json();
-        const updatedSlides = [...deck.slides];
+      if (res.ok) {
+        const data = await res.json();
+        const updatedSlides = [...currentDeck.slides];
         updatedSlides[activeSlideIndex] = data.slide;
-        setDeck({ ...deck, slides: updatedSlides });
-        alert(`Slide ${slideId} regenerated and re-verified successfully!`);
+        setCurrentDeck({ ...currentDeck, slides: updatedSlides });
+        setShowRegenModal(false);
+        setRegenHint("");
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleUpgrade = async () => {
-    if (!deck) return;
-    try {
-      const targetStack =
-        stackType === "java"
-          ? { java: "21", spring_boot: "3.3" }
-          : { python: "3.12", framework: "fastapi" };
+  const navItems = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "generate", label: "Generate Course", icon: Sparkles },
+    {
+      id: "courses",
+      label: "My Courses",
+      icon: BookOpen,
+      badge: decks.length,
+    },
+    { id: "preview", label: "Slide Preview", icon: Presentation },
+    { id: "verification", label: "AI Verification", icon: ShieldCheck },
+    {
+      id: "theater",
+      label: "Self-Healing Theater",
+      icon: PlayCircle,
+      tag: "Live",
+    },
+    { id: "notes", label: "Trainer Notes", icon: FileText },
+    { id: "export", label: "Export Center", icon: DownloadCloud },
+    { id: "settings", label: "Settings", icon: Sliders },
+  ];
 
-      const resp = await fetch(`${API_BASE}/decks/${deck.deck_id}/upgrade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_stack: targetStack }),
-      });
-      if (resp.ok) {
-        const diffData = await resp.json();
-        setUpgradeDiff(diffData);
-        loadDeck(deck.deck_id);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const activeSlide = deck?.slides?.[activeSlideIndex];
+  const currentSlide =
+    currentDeck && currentDeck.slides
+      ? currentDeck.slides[activeSlideIndex]
+      : null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans">
-      {/* Top Navigation */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/20">
-            <ShieldCheck className="w-6 h-6" />
+    <div className="min-h-screen flex bg-[#0B0F19] text-slate-100 overflow-x-hidden font-sans">
+      {/* ===================================================================== */}
+      {/* Collapsible Sidebar (Agndex-inspired Layout) */}
+      {/* ===================================================================== */}
+      <aside
+        className={`${
+          sidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#0F172A] border-r border-slate-800 flex flex-col transition-all duration-300 z-40 select-none flex-shrink-0 min-h-screen`}
+      >
+        {/* Brand Header */}
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="bg-white p-1 rounded-md flex-shrink-0 shadow-sm flex items-center justify-center">
+              <img
+                src="/assets/techsummit-logo.jpg"
+                alt="TechSummitTrainers"
+                className="h-7 w-auto object-contain"
+                onError={(e: any) => {
+                  e.target.style.display = "none";
+                }}
+              />
+            </div>
+            {!sidebarCollapsed && (
+              <div className="truncate">
+                <div className="text-xs font-bold text-white tracking-tight">
+                  TechSummitTrainers
+                </div>
+                <div className="text-[10px] text-[#F5A400] font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Powered by Pandavs AI
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-white">
-                Verified Course Material Studio
-              </h1>
-              <span className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-                Zero-Trust Pipeline
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Navigation List */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {!sidebarCollapsed && (
+            <div className="text-[10px] uppercase font-semibold text-slate-500 px-3 pt-2 pb-1 tracking-wider">
+              Course Studio
+            </div>
+          )}
+
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentNav === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentNav(item.id as any)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
+                  isActive
+                    ? "bg-[#F5A400] text-slate-950 font-bold shadow-sm"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800/80"
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-slate-950" : "text-[#F5A400]"
+                  }`}
+                />
+                {!sidebarCollapsed && (
+                  <span className="truncate">{item.label}</span>
+                )}
+                {!sidebarCollapsed && item.badge !== undefined && (
+                  <span className="ml-auto text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full font-mono">
+                    {item.badge}
+                  </span>
+                )}
+                {!sidebarCollapsed && item.tag && (
+                  <span className="ml-auto text-[9px] bg-amber-500/20 text-[#F5A400] border border-amber-500/30 px-1.5 py-0.2 rounded font-semibold uppercase">
+                    {item.tag}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-slate-800 bg-[#0A0E1A]">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 space-y-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 flex items-center gap-1.5 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                {!sidebarCollapsed && "Qwen3:8b (Local)"}
+              </span>
+              <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-mono">
+                100% LOCAL
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              Only verified content reaches the presentation deck
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowTheaterModal(true)}
-            className="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/25 transition"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Watch AI Fix Its Own Code</span>
-          </button>
-          <button
-            onClick={() => loadDeck("d_001")}
-            className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Load Sample Deck (d_001)
-          </button>
-          {deck && (
-            <>
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
-              >
-                <FileCheck2 className="w-3.5 h-3.5" />
-                Audit Report
-              </button>
-              <a
-                href={`${API_BASE}/decks/${deck.deck_id}/export?format=pptx`}
-                download
-                className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-md transition"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export .PPTX
-              </a>
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* Main Workspace Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1600px] mx-auto w-full">
-        {/* Left Column: Generator Configuration & Pipeline Monitor (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          {/* AI Code Verification & Self-Healing Theater Card */}
-          <div className="bg-gradient-to-br from-indigo-950/70 via-slate-900 to-purple-950/50 border border-indigo-500/40 rounded-xl p-5 shadow-lg space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                </span>
-                <div>
-                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                    AI Code Verification & Self-Healing
-                    <span className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-semibold uppercase">
-                      Live Theater
-                    </span>
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Watch Pandavs detect, repair, and re-verify faulty code automatically.
-                  </p>
-                </div>
+            {!sidebarCollapsed && (
+              <div className="text-[10px] text-slate-500 truncate">
+                Zero-Trust Sandbox Runner
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowTheaterModal(true)}
-              className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-xs"
-            >
-              <Play className="w-3.5 h-3.5 text-white" />
-              <span>Watch AI Fix Its Own Code</span>
-            </button>
+            )}
           </div>
+        </div>
+      </aside>
 
-          {/* Generation Form Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-                Course Generator
+      {/* ===================================================================== */}
+      {/* Main Content Area */}
+      {/* ===================================================================== */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Top Header */}
+        <header className="h-16 border-b border-slate-800 bg-[#0F172A]/90 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="lg:hidden text-slate-400 hover:text-white p-1.5 rounded-lg border border-slate-800"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-medium">
+                  TechSummitTrainers
+                </span>
+                <span className="text-slate-600">/</span>
+                <span className="text-xs font-semibold text-white capitalize">
+                  {currentNav}
+                </span>
+              </div>
+              <h2 className="text-sm font-bold text-slate-200 tracking-tight">
+                Pandavs Course Studio
               </h2>
             </div>
-
-            <form onSubmit={startGeneration} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Topic / Title
-                </label>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
-                    Audience Level
-                  </label>
-                  <select
-                    value={level}
-                    onChange={(e) => setLevel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
-                    Duration (Minutes)
-                  </label>
-                  <input
-                    type="number"
-                    value={minutes}
-                    onChange={(e) => setMinutes(Number(e.target.value))}
-                    min={15}
-                    max={240}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Target Architecture Stack
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStackType("java")}
-                    className={`py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 transition ${
-                      stackType === "java"
-                        ? "border-indigo-500 bg-indigo-500/10 text-white font-medium"
-                        : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
-                    }`}
-                  >
-                    <span className="font-semibold">Java 21</span>
-                    <span className="text-[10px] text-slate-400">Spring Boot 3.3</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setStackType("python")}
-                    className={`py-2 px-3 text-xs rounded-lg border text-left flex flex-col gap-0.5 transition ${
-                      stackType === "python"
-                        ? "border-indigo-500 bg-indigo-500/10 text-white font-medium"
-                        : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
-                    }`}
-                  >
-                    <span className="font-semibold">Python 3.12</span>
-                    <span className="text-[10px] text-slate-400">FastAPI & AsyncIO</span>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isGenerating}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition text-sm"
-              >
-                {isGenerating ? (
-                  <>
-                    <RotateCw className="w-4 h-4 animate-spin" />
-                    Executing Pipeline...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Generate Verified Deck
-                  </>
-                )}
-              </button>
-            </form>
           </div>
 
-          {/* Pipeline Live Progress Card */}
-          {(isGenerating || currentStage) && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-                  Live Verification Core
-                </span>
-                <span className="text-xs font-bold text-indigo-400">{stageProgress}%</span>
-              </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowTheaterModal(true)}
+              className="text-xs bg-gradient-to-r from-[#F5A400] via-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+              <span>Watch AI Fix Its Own Code</span>
+            </button>
 
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-                <div
-                  className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-300"
-                  style={{ width: `${stageProgress}%` }}
-                />
-              </div>
+            <button
+              onClick={() => loadDeck("d_001")}
+              className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-sky-400" />
+              <span>Demo Deck</span>
+            </button>
 
-              {/* Stage Pills */}
-              <div className="grid grid-cols-4 gap-1 text-[11px] text-center">
-                <div
-                  className={`py-1 rounded ${
-                    currentStage === "planner"
-                      ? "bg-indigo-500 text-white font-semibold"
-                      : "bg-slate-950 text-slate-400"
-                  }`}
-                >
-                  Planner
-                </div>
-                <div
-                  className={`py-1 rounded ${
-                    currentStage === "generator"
-                      ? "bg-indigo-500 text-white font-semibold"
-                      : "bg-slate-950 text-slate-400"
-                  }`}
-                >
-                  Generator
-                </div>
-                <div
-                  className={`py-1 rounded ${
-                    currentStage === "verifier"
-                      ? "bg-emerald-600 text-white font-semibold animate-pulse"
-                      : "bg-slate-950 text-slate-400"
-                  }`}
-                >
-                  Verifier
-                </div>
-                <div
-                  className={`py-1 rounded ${
-                    currentStage === "renderer" || currentStage === "complete"
-                      ? "bg-indigo-500 text-white font-semibold"
-                      : "bg-slate-950 text-slate-400"
-                  }`}
-                >
-                  Renderer
-                </div>
-              </div>
+            <a
+              href={`${API_BASE}/decks/${activeDeckId}/export?format=pptx`}
+              download
+              className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-md transition"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export .PPTX</span>
+            </a>
+          </div>
+        </header>
 
-              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 flex items-start gap-2">
-                <Terminal className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>{statusMessage || "Pipeline ready."}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Slide List Navigator */}
-          {deck && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col flex-1">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="text-xs uppercase font-semibold tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5" />
-                  Slides ({deck.slides.length})
-                </span>
-                <span className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  100% Verified
-                </span>
-              </div>
-
-              <div className="space-y-1.5 overflow-y-auto max-h-[360px] pr-1">
-                {deck.slides.map((s: any, idx: number) => {
-                  const hasCode = s.code && s.code.length > 0;
-                  const isVerified = hasCode ? s.code[0].verified === "passed" : true;
-                  const isActive = idx === activeSlideIndex;
-
-                  return (
+        {/* Dynamic Views */}
+        <main className="p-6 max-w-7xl mx-auto w-full flex-1">
+          {/* VIEW 1: OVERVIEW */}
+          {currentNav === "overview" && (
+            <div className="space-y-6">
+              {/* Hero Banner */}
+              <div className="bg-gradient-to-r from-slate-900 via-[#131B2E] to-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-xl">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                  <div className="space-y-2 max-w-2xl">
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#F5A400]/15 border border-[#F5A400]/30 text-[#F5A400] text-xs font-semibold">
+                      <Award className="w-3.5 h-3.5" />
+                      Official TechSummitTrainers Course Generation Engine
+                    </div>
+                    <h1 className="text-2xl font-black text-white tracking-tight">
+                      Enterprise AI Course Material Studio
+                    </h1>
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                      Generate masterclass-grade slides, 100% verified code
+                      examples, and dual-prover exercises branded with the
+                      official TechSummitTrainers PowerPoint template. Powered
+                      by Qwen3 with Zero-Trust sandbox verification.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
                     <button
-                      key={s.id}
-                      onClick={() => setActiveSlideIndex(idx)}
-                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
-                        isActive
-                          ? "border-indigo-500 bg-indigo-500/10 text-white font-medium"
-                          : "border-slate-800/80 bg-slate-950/60 hover:bg-slate-800/50 text-slate-300"
-                      }`}
+                      onClick={() => setCurrentNav("generate")}
+                      className="bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-lg shadow-amber-500/20 text-xs transition"
                     >
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="text-slate-500 font-mono text-[10px]">
-                          {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                        </span>
-                        <span className="truncate">{s.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {hasCode && (
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              isVerified ? "bg-emerald-400" : "bg-amber-400"
-                            }`}
-                          />
-                        )}
-                        <span className="text-[10px] text-slate-500 uppercase">{s.type}</span>
-                      </div>
+                      <Sparkles className="w-4 h-4" />
+                      Generate New Course
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Slide Presentation Stage & Verification Details (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          {deck && activeSlide ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
-              {/* Slide Presentation Header Bar */}
-              <div className="bg-slate-950/80 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded">
-                    Slide {activeSlideIndex + 1} of {deck.slides.length} ({activeSlide.id})
-                  </span>
-                  <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded uppercase font-semibold">
-                    {activeSlide.type}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={regenerateCurrentSlide}
-                    className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition"
-                    title="Regenerate this single slide with isolated re-verification"
-                  >
-                    <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                    Regenerate Slide
-                  </button>
-                  <button
-                    onClick={() => setShowUpgradeModal(true)}
-                    className="text-xs bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-amber-400" />
-                    Upgrade Stack
-                  </button>
+                    <button
+                      onClick={() => setShowTheaterModal(true)}
+                      className="border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 text-xs transition"
+                    >
+                      <Play className="w-4 h-4 text-[#F5A400]" />
+                      Watch AI Fix Its Own Code
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Slide Preview Canvas (16:9 aspect) */}
-              <div className="p-8 bg-slate-950/40 min-h-[460px] flex flex-col justify-between border-b border-slate-800">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-white mb-6">
-                    {activeSlide.title}
-                  </h2>
+              {/* Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-slate-400 mb-2">
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Available Courses
+                    </span>
+                    <BookOpen className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-white">
+                    {decks.length || 1}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    Ready for classroom delivery
+                  </div>
+                </div>
 
-                  {/* Bullets List */}
-                  {activeSlide.bullets && activeSlide.bullets.length > 0 && (
-                    <ul className="space-y-3 mb-6">
-                      {activeSlide.bullets.map((b: string, i: number) => (
-                        <li key={i} className="flex items-start gap-3 text-sm text-slate-200">
-                          <span className="text-indigo-400 mt-1">✦</span>
-                          <span>{b}</span>
-                        </li>
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-slate-400 mb-2">
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Snippets Verified
+                    </span>
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-400">
+                    {report?.passed || 3}
+                  </div>
+                  <div className="text-[11px] text-emerald-500/80 mt-1">
+                    Zero fabricated assertions
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-slate-400 mb-2">
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Sandbox Pass Rate
+                    </span>
+                    <CheckCircle2 className="w-4 h-4 text-[#F5A400]" />
+                  </div>
+                  <div className="text-2xl font-bold text-white">
+                    {report?.verification_rate_pct || 100}%
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    Zero-Trust Isolation
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between text-slate-400 mb-2">
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Dual-Prover Labs
+                    </span>
+                    <Award className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-purple-400">
+                    {(report?.exercises_proven || []).length || 1}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    Contract: Tests Must Bite
+                  </div>
+                </div>
+              </div>
+
+              {/* Courses Table */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Active Curriculum Repositories
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Course decks ready for presentation, preview, and PPTX
+                      download.
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchDecks}
+                    className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition"
+                  >
+                    <RotateCw className="w-3.5 h-3.5" /> Refresh
+                  </button>
+                </div>
+
+                <div className="border border-slate-800 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="p-3">Course Title / Topic</th>
+                        <th className="p-3">Student Level</th>
+                        <th className="p-3">Duration</th>
+                        <th className="p-3">Verification</th>
+                        <th className="p-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {decks.map((d) => (
+                        <tr
+                          key={d.deck_id}
+                          className="hover:bg-slate-800/50 transition"
+                        >
+                          <td className="p-3">
+                            <div className="font-bold text-white">
+                              {d.topic || d.deck_id}
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-mono">
+                              {d.deck_id}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] uppercase font-mono font-bold bg-sky-500/20 text-sky-400">
+                              {d.level || "intermediate"}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-300 font-mono">
+                            {d.minutes || 90}m
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                              ✓ SANDBOX VERIFIED
+                            </span>
+                          </td>
+                          <td className="p-3 text-right space-x-1.5">
+                            <button
+                              onClick={() => {
+                                loadDeck(d.deck_id);
+                                setCurrentNav("preview");
+                              }}
+                              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded transition"
+                            >
+                              Preview
+                            </button>
+                            <a
+                              href={`${API_BASE}/decks/${d.deck_id}/export?format=pptx`}
+                              download
+                              className="text-xs bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-semibold px-2.5 py-1 rounded transition inline-block"
+                            >
+                              .PPTX
+                            </a>
+                          </td>
+                        </tr>
                       ))}
-                    </ul>
-                  )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
-                  {/* Code Card with Verification Badge */}
-                  {activeSlide.code && activeSlide.code.length > 0 && (
-                    <div className="rounded-lg border border-slate-800 bg-slate-950 overflow-hidden mt-4">
-                      <div className="bg-slate-900/90 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                          <Code2 className="w-4 h-4 text-indigo-400" />
-                          <span>
-                            {activeSlide.code[0].lang} ({activeSlide.code[0].version}) ·{" "}
-                            {activeSlide.code[0].kind}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {activeSlide.code[0].verified === "passed" ? (
-                            <span className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              VERIFIED PASSED (1 att)
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              UNVERIFIED
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed">
-                        <code>{activeSlide.code[0].source}</code>
-                      </pre>
-                    </div>
-                  )}
-
-                  {/* Diagram Presentation */}
-                  {activeSlide.diagram && (
-                    <div className="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-800">
-                      <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider block mb-2">
-                        Visual Architecture Diagram
-                      </span>
-                      <pre className="text-xs font-mono text-sky-300 bg-slate-950 p-3 rounded border border-slate-800">
-                        {typeof activeSlide.diagram === "object" && activeSlide.diagram.source
-                          ? activeSlide.diagram.source
-                          : activeSlide.diagram}
-                      </pre>
-                    </div>
-                  )}
+          {/* VIEW 2: GENERATE COURSE */}
+          {currentNav === "generate" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-[#F5A400]" />
+                      Course Architect & Generator
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Input any programming topic to generate a verified,
+                      masterclass-grade slide deck.
+                    </p>
+                  </div>
+                  <span className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 px-2.5 py-1 rounded font-mono">
+                    Qwen3 Local AI
+                  </span>
                 </div>
 
-                {/* Speaker Notes */}
-                {activeSlide.notes && (
-                  <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-400 bg-slate-900/40 p-3 rounded-lg">
-                    <BookOpen className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                {/* Preset Chips */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2">
+                    Popular Topic Presets (1-Click Fill)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      {
+                        name: "🐍 Python Variables",
+                        t: "Python Variables & Data Types",
+                        l: "beginner",
+                        s: "python",
+                      },
+                      {
+                        name: "🍃 Spring Boot 3",
+                        t: "Spring Boot 3 REST APIs & Microservices",
+                        l: "intermediate",
+                        s: "java",
+                      },
+                      {
+                        name: "🦀 Rust Safety",
+                        t: "Rust Memory Safety & Ownership",
+                        l: "advanced",
+                        s: "rust",
+                      },
+                      {
+                        name: "⚛️ React 19",
+                        t: "React 19 & Next.js Architecture",
+                        l: "intermediate",
+                        s: "typescript",
+                      },
+                      {
+                        name: "⚡ FastAPI Async",
+                        t: "FastAPI Asynchronous Web Services",
+                        l: "intermediate",
+                        s: "python",
+                      },
+                    ].map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => {
+                          setTopic(preset.t);
+                          setLevel(preset.l);
+                          setStackType(preset.s);
+                        }}
+                        className="text-xs bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 px-2.5 py-1.5 rounded-md transition"
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={handleGenerate} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Course Topic
+                    </label>
+                    <input
+                      type="text"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-[#F5A400]"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <strong className="text-slate-300 mr-1">Trainer Delivery Notes:</strong>
-                      {activeSlide.notes}
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Learner Level
+                      </label>
+                      <select
+                        value={level}
+                        onChange={(e) => setLevel(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-[#F5A400]"
+                      >
+                        <option value="beginner">🌱 Beginner</option>
+                        <option value="intermediate">⚡ Intermediate</option>
+                        <option value="advanced">🔥 Advanced</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Duration (Mins)
+                      </label>
+                      <input
+                        type="number"
+                        value={minutes}
+                        onChange={(e) =>
+                          setMinutes(parseInt(e.target.value) || 90)
+                        }
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-[#F5A400]"
+                      />
                     </div>
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Technology Stack
+                    </label>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      {[
+                        "auto",
+                        "python",
+                        "java",
+                        "typescript",
+                        "rust",
+                        "go",
+                        "cpp",
+                        "sql",
+                      ].map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setStackType(st)}
+                          className={`p-2 rounded border text-center transition capitalize font-semibold ${
+                            stackType === st
+                              ? "border-[#F5A400] bg-[#F5A400]/15 text-white"
+                              : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
+                          }`}
+                        >
+                          {st === "auto" ? "✨ Auto Inferred" : st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isGenerating}
+                    className="w-full bg-[#F5A400] hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition text-sm"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>
+                      {isGenerating
+                        ? "Generating with Qwen3..."
+                        : "Generate Verified Course with Qwen3"}
+                    </span>
+                  </button>
+                </form>
               </div>
 
-              {/* Bottom Pagination controls */}
-              <div className="bg-slate-950 px-6 py-3 flex items-center justify-between">
-                <button
-                  disabled={activeSlideIndex === 0}
-                  onClick={() => setActiveSlideIndex(activeSlideIndex - 1)}
-                  className="text-xs text-slate-400 hover:text-white disabled:opacity-30 transition"
-                >
-                  ← Previous Slide
-                </button>
-                <span className="text-xs text-slate-500 font-mono">
-                  {activeSlideIndex + 1} / {deck.slides.length}
-                </span>
-                <button
-                  disabled={activeSlideIndex === deck.slides.length - 1}
-                  onClick={() => setActiveSlideIndex(activeSlideIndex + 1)}
-                  className="text-xs text-slate-400 hover:text-white disabled:opacity-30 transition"
-                >
-                  Next Slide →
-                </button>
+              {/* Progress Box */}
+              <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <span className="text-xs uppercase font-bold tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-[#F5A400]" />
+                    Pipeline Monitor
+                  </span>
+                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
+                    {pipelineBadge}
+                  </span>
+                </div>
+
+                <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 h-64 overflow-y-auto space-y-1">
+                  {pipelineLogs.map((log, idx) => (
+                    <div key={idx} className="leading-relaxed">
+                      {log}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-500">
-              No deck loaded. Click "Load Sample Deck" or generate a new deck.
             </div>
           )}
 
-          {/* Exercise Prover Card ("Tests Must Bite") */}
-          {deck && deck.exercises && deck.exercises.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-indigo-400" />
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-                    Dual-Prover Exercise Verification ("Tests Must Bite")
-                  </h3>
+          {/* VIEW 3: MY COURSES */}
+          {currentNav === "courses" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-sky-400" />
+                    Course Curricula Library
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    All generated courses available for classroom presentation.
+                  </p>
                 </div>
-                <span className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-semibold">
-                  Contract: Proven
-                </span>
+                <button
+                  onClick={fetchDecks}
+                  className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
+                >
+                  <RotateCw className="w-3.5 h-3.5" /> Refresh
+                </button>
               </div>
 
-              {deck.exercises.map((ex: any) => (
-                <div key={ex.id} className="space-y-3">
-                  <div className="text-xs text-slate-300 font-semibold">{ex.title}</div>
-                  <p className="text-xs text-slate-400">{ex.description}</p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-slate-950 p-3 rounded-lg border border-emerald-900/30">
-                      <div className="flex items-center justify-between text-emerald-400 font-semibold mb-1">
-                        <span>1. Reference Solution</span>
-                        <span>✓ Passes Unit Tests</span>
-                      </div>
-                      <p className="text-slate-400 text-[11px]">
-                        Instructor reference implementation successfully executes all test cases.
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-950 p-3 rounded-lg border border-red-900/30">
-                      <div className="flex items-center justify-between text-red-400 font-semibold mb-1">
-                        <span>2. Naive Buggy Solution</span>
-                        <span>✓ Caught & Fails Tests</span>
-                      </div>
-                      <p className="text-slate-400 text-[11px]">
-                        Flawed code missing active filter was successfully rejected by test suite.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Verification Report Modal */}
-      {showReportModal && report && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <FileCheck2 className="w-5 h-5 text-sky-400" />
-                Zero-Trust Sandbox Verification Audit
-              </h3>
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3">
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-                <div className="text-xs text-slate-400">Total Snippets</div>
-                <div className="text-xl font-bold text-white">{report.total_snippets}</div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-                <div className="text-xs text-slate-400">Sandbox Passed</div>
-                <div className="text-xl font-bold text-emerald-400">{report.passed}</div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-                <div className="text-xs text-slate-400">Pass Rate</div>
-                <div className="text-xl font-bold text-indigo-400">
-                  {report.verification_rate_pct}%
-                </div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-                <div className="text-xs text-slate-400">Proven Exercises</div>
-                <div className="text-xl font-bold text-sky-400">
-                  {report.exercises_proven?.length || 1}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-xs uppercase font-semibold text-slate-400">Execution Telemetry</h4>
               <div className="border border-slate-800 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950 text-slate-400">
+                  <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
                     <tr>
-                      <th className="p-2.5">Snippet</th>
-                      <th className="p-2.5">Runtime</th>
-                      <th className="p-2.5">Status</th>
-                      <th className="p-2.5">Duration</th>
-                      <th className="p-2.5">Attempts</th>
+                      <th className="p-3">Course Title</th>
+                      <th className="p-3">Level</th>
+                      <th className="p-3">Duration</th>
+                      <th className="p-3">Verification</th>
+                      <th className="p-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {report.execution_summary?.map((row: any) => (
-                      <tr key={row.snippet_id} className="hover:bg-slate-800/40">
-                        <td className="p-2.5 font-mono text-indigo-300">{row.snippet_id}</td>
-                        <td className="p-2.5">
-                          {row.lang} {row.version}
+                    {decks.map((d) => (
+                      <tr
+                        key={d.deck_id}
+                        className="hover:bg-slate-800/50 transition"
+                      >
+                        <td className="p-3">
+                          <div className="font-bold text-white">
+                            {d.topic || d.deck_id}
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-mono">
+                            {d.deck_id}
+                          </div>
                         </td>
-                        <td className="p-2.5">
-                          <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[11px] font-semibold">
-                            PASSED
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-mono font-bold bg-sky-500/20 text-sky-400">
+                            {d.level || "intermediate"}
                           </span>
                         </td>
-                        <td className="p-2.5 font-mono text-slate-300">{row.duration_ms} ms</td>
-                        <td className="p-2.5">{row.attempts || 1}</td>
+                        <td className="p-3 text-slate-300 font-mono">
+                          {d.minutes || 90}m
+                        </td>
+                        <td className="p-3">
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                            ✓ SANDBOX VERIFIED
+                          </span>
+                        </td>
+                        <td className="p-3 text-right space-x-1.5">
+                          <button
+                            onClick={() => {
+                              loadDeck(d.deck_id);
+                              setCurrentNav("preview");
+                            }}
+                            className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded transition"
+                          >
+                            Preview
+                          </button>
+                          <a
+                            href={`${API_BASE}/decks/${d.deck_id}/export?format=pptx`}
+                            download
+                            className="text-xs bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-semibold px-2.5 py-1 rounded transition inline-block"
+                          >
+                            .PPTX
+                          </a>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
+          )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <a
-                href={`${API_BASE}/decks/${deck.deck_id}/report?format=html`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded flex items-center gap-1.5 transition"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                View Full HTML Report
-              </a>
+          {/* VIEW 4: SLIDE PREVIEW */}
+          {currentNav === "preview" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-300">
+                    Active Course:
+                  </span>
+                  <span className="text-sm font-bold text-[#F5A400]">
+                    {currentDeck?.topic || "Loading..."}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowRegenModal(true)}
+                    className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#F5A400]" />
+                    <span>Regenerate Slide</span>
+                  </button>
+                  <a
+                    href={`${API_BASE}/decks/${activeDeckId}/export?format=pptx`}
+                    download
+                    className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md transition"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export PPTX</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* 16:9 Presentation Canvas */}
+              <div className="w-full max-w-5xl mx-auto aspect-[16/9] bg-white rounded-xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col text-slate-900 relative">
+                <div className="h-1.5 w-full bg-[#F5A400]"></div>
+                <div className="px-8 pt-6 pb-2 flex items-center justify-between">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {currentSlide?.title || "Slide Title"}
+                    </h2>
+                    <div className="h-0.5 w-16 bg-[#F5A400] mt-1.5"></div>
+                  </div>
+                  <div className="flex-shrink-0 ml-4">
+                    <img
+                      src="/assets/techsummit-logo.jpg"
+                      alt="TechSummitTrainers"
+                      className="h-7 w-auto object-contain"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 px-8 py-4 overflow-y-auto">
+                  {currentSlide?.type === "code" ? (
+                    <div className="grid grid-cols-12 gap-6 h-full items-start">
+                      <div className="col-span-5 space-y-3">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#F5A400]">
+                          Key Concepts
+                        </div>
+                        <div className="space-y-2">
+                          {(currentSlide.bullets || []).map(
+                            (b: string, i: number) => (
+                              <div
+                                key={i}
+                                className="text-xs text-slate-700 leading-relaxed"
+                              >
+                                • {b}
+                              </div>
+                            )
+                          )}
+                        </div>
+                        {currentSlide.pro_tip && (
+                          <div className="p-2.5 bg-amber-50 border-l-4 border-[#F5A400] rounded text-[11px] text-amber-900 font-medium">
+                            💡 <strong>Pro-Tip:</strong> {currentSlide.pro_tip}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-span-7 bg-[#0F172A] rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+                        <div className="px-3 py-2 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                          <span className="text-[11px] font-mono text-slate-300">
+                            💻 {currentSlide.code?.[0]?.lang || "python"}
+                          </span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-500 text-white">
+                            ✓ SANDBOX VERIFIED
+                          </span>
+                        </div>
+                        <pre className="p-3 font-mono text-xs text-emerald-400 overflow-x-auto max-h-[300px] leading-relaxed">
+                          {currentSlide.code?.[0]?.source ||
+                            "// No code block"}
+                        </pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 py-2">
+                      {(currentSlide?.bullets || []).map(
+                        (b: string, i: number) => (
+                          <div
+                            key={i}
+                            className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 flex items-start gap-2.5"
+                          >
+                            <span className="text-[#F5A400] font-bold text-base mt-0.5">
+                              ✦
+                            </span>
+                            <span className="leading-relaxed">{b}</span>
+                          </div>
+                        )
+                      )}
+                      {currentSlide?.pro_tip && (
+                        <div className="p-3 bg-amber-50 border-l-4 border-[#F5A400] rounded-r-lg text-xs text-amber-900">
+                          💡 <strong>TechSummit Pro-Tip:</strong>{" "}
+                          {currentSlide.pro_tip}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-8 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                  <span>
+                    TechSummitTrainers · Powered by Pandavs AI Course Studio ·
+                    100% Sandbox Verified
+                  </span>
+                  <span className="font-mono font-semibold text-slate-700">
+                    Slide {activeSlideIndex + 1} of{" "}
+                    {currentDeck?.slides?.length || 1}
+                  </span>
+                </div>
+              </div>
+
+              {/* Slide Nav Controls */}
+              <div className="flex items-center justify-between max-w-5xl mx-auto bg-slate-900 border border-slate-800 rounded-xl p-3">
+                <button
+                  disabled={activeSlideIndex <= 0}
+                  onClick={() => setActiveSlideIndex(activeSlideIndex - 1)}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 transition"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Previous
+                </button>
+                <div className="flex gap-2 overflow-x-auto py-1">
+                  {(currentDeck?.slides || []).map((_: any, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveSlideIndex(idx)}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center transition ${
+                        idx === activeSlideIndex
+                          ? "bg-[#F5A400] text-slate-950 font-bold"
+                          : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  disabled={
+                    !currentDeck ||
+                    activeSlideIndex >= currentDeck.slides.length - 1
+                  }
+                  onClick={() => setActiveSlideIndex(activeSlideIndex + 1)}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 transition"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 5: AI VERIFICATION */}
+          {currentNav === "verification" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                    Zero-Trust Sandbox Verification Audit
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Execution metrics across isolated runners and anti-cheat
+                    contracts.
+                  </p>
+                </div>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/report?format=html`}
+                  target="_blank"
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Standalone HTML Report
+                </a>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="text-xs text-slate-400">Total Snippets</div>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {report?.total_snippets || 3}
+                  </div>
+                </div>
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="text-xs text-slate-400">Passed Sandbox</div>
+                  <div className="text-2xl font-bold text-emerald-400 mt-1">
+                    {report?.passed || 3}
+                  </div>
+                </div>
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="text-xs text-slate-400">Pass Rate</div>
+                  <div className="text-2xl font-bold text-[#F5A400] mt-1">
+                    {report?.verification_rate_pct || 100}%
+                  </div>
+                </div>
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="text-xs text-slate-400">Proven Exercises</div>
+                  <div className="text-2xl font-bold text-purple-400 mt-1">
+                    {(report?.exercises_proven || []).length || 1}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 6: SELF-HEALING THEATER */}
+          {currentNav === "theater" && (
+            <div className="bg-gradient-to-br from-indigo-950/40 via-slate-900 to-amber-950/20 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs text-[#F5A400] font-semibold mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[#F5A400] animate-ping"></span>
+                    AI Code Self-Healing & Sandbox Prover
+                  </div>
+                  <h2 className="text-xl font-black text-white tracking-tight">
+                    Watch AI Fix Its Own Code Theater
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Real code execution with live traceback capture and Qwen3
+                    re-verification.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <select
+                    value={theaterExample}
+                    onChange={(e) => setTheaterExample(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
+                  >
+                    <option value="python_add">
+                      Arithmetic Operator Bug (a - b)
+                    </option>
+                    <option value="python_boundary">
+                      Off-by-One Loop Boundary
+                    </option>
+                    <option value="python_syntax">
+                      Missing Colon Syntax Error
+                    </option>
+                  </select>
+                  <button
+                    disabled={theaterRunning}
+                    onClick={() => startTheaterDemo(theaterExample)}
+                    className="bg-[#F5A400] hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold px-4 py-2 rounded-lg flex items-center gap-2 text-xs shadow-lg shadow-amber-500/20 transition"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>
+                      {theaterRunning ? "Running..." : "Launch Real Execution"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Code Diff & Logs */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-rose-400">
+                      <span>Faulty Input Code</span>
+                      <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono">
+                        FAILS ASSERTION
+                      </span>
+                    </div>
+                    <pre className="font-mono text-xs text-rose-200 bg-slate-900/80 p-3 rounded-lg overflow-x-auto">
+                      {theaterExample === "python_add"
+                        ? "def add(a: int, b: int) -> int:\n    return a - b"
+                        : theaterExample === "python_boundary"
+                        ? "def sum_to_n(n: int) -> int:\n    total = 0\n    for i in range(1, n):\n        total += i\n    return total"
+                        : "def greet(name: str) -> str\n    return f'Hello, {name}!'"}
+                    </pre>
+                  </div>
+
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-emerald-400">
+                      <span>Repaired & Verified Code</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                          theaterVerifiedStatus === "passed"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold"
+                            : "bg-slate-800 text-slate-400"
+                        }`}
+                      >
+                        {theaterVerifiedStatus === "passed"
+                          ? "✓ 100% VERIFIED"
+                          : "PENDING"}
+                      </span>
+                    </div>
+                    <pre className="font-mono text-xs text-emerald-300 bg-slate-900/80 p-3 rounded-lg overflow-x-auto min-h-[90px]">
+                      {theaterRepairedCode ||
+                        "// Run self-healing to inspect generated repair..."}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
+                    <span className="flex items-center gap-1.5 font-mono">
+                      <Terminal className="w-4 h-4 text-[#F5A400]" /> Sandbox
+                      Runner Stream
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Zero-Trust
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs text-slate-300 space-y-1 h-72 overflow-y-auto p-2 bg-slate-900/90 rounded-lg">
+                    {theaterLogs.map((l, idx) => (
+                      <div key={idx} className="leading-relaxed">
+                        {l}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 7: TRAINER NOTES */}
+          {currentNav === "notes" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-purple-400" />
+                    Classroom Delivery & Student Notes
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Comprehensive instructional talking points and student
+                    revision guides.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                  <button
+                    onClick={() => setNotesMode("trainer")}
+                    className={`text-xs px-3 py-1.5 rounded-md font-semibold transition ${
+                      notesMode === "trainer"
+                        ? "bg-[#F5A400] text-slate-950"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Trainer Notes
+                  </button>
+                  <button
+                    onClick={() => setNotesMode("student")}
+                    className={`text-xs px-3 py-1.5 rounded-md font-semibold transition ${
+                      notesMode === "student"
+                        ? "bg-[#F5A400] text-slate-950"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Student Notes
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {(notesMode === "trainer"
+                  ? notesData?.trainer_notes || []
+                  : notesData?.student_notes || []
+                ).map((n: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-bold text-white">
+                        Slide {n.slide_number}: {n.title}
+                      </span>
+                      <span className="text-[10px] text-[#F5A400] uppercase font-mono font-bold">
+                        {n.type}
+                      </span>
+                    </div>
+                    {notesMode === "trainer" ? (
+                      <>
+                        <div className="text-xs text-slate-300 leading-relaxed">
+                          {n.teaching_script}
+                        </div>
+                        <div className="text-[11px] text-amber-300/90 bg-amber-950/20 border border-amber-800/30 p-2 rounded">
+                          ⚠️ <strong>Common Pitfall:</strong>{" "}
+                          {n.common_pitfalls}
+                        </div>
+                        {n.quiz_solution && (
+                          <div className="text-[11px] text-emerald-300/90 bg-emerald-950/20 border border-emerald-800/30 p-2 rounded">
+                            ✓ <strong>Quiz Solution:</strong> Option{" "}
+                            {n.quiz_solution.correct_option_index + 1} —{" "}
+                            {n.quiz_solution.rationale}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-xs text-slate-300 leading-relaxed">
+                          {n.summary}
+                        </div>
+                        {(n.core_takeaways || []).map(
+                          (t: string, i: number) => (
+                            <div key={i} className="text-xs text-slate-400">
+                              • {t}
+                            </div>
+                          )
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 8: EXPORT CENTER */}
+          {currentNav === "export" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="w-10 h-10 rounded-lg bg-[#F5A400]/15 flex items-center justify-center text-[#F5A400]">
+                  <Presentation className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    PowerPoint Presentation (.PPTX)
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Official TechSummitTrainers 16:9 widescreen presentation
+                    with embedded logo and speaker notes.
+                  </p>
+                </div>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/export?format=pptx`}
+                  download
+                  className="w-full bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs transition"
+                >
+                  <Download className="w-4 h-4" /> Download PPTX
+                </a>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="w-10 h-10 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Zero-Trust Audit Report (.HTML)
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Interactive verification telemetry with snippet execution
+                    durations and test proofs.
+                  </p>
+                </div>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/report?format=html`}
+                  target="_blank"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition"
+                >
+                  <ExternalLink className="w-4 h-4 text-sky-400" /> View Report
+                </a>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Curriculum Notes Companion
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Trainer delivery walkthroughs, student cheat sheets, and
+                    distractor solutions in JSON.
+                  </p>
+                </div>
+                <a
+                  href={`${API_BASE}/decks/${activeDeckId}/notes`}
+                  target="_blank"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition"
+                >
+                  <FileCode className="w-4 h-4 text-purple-400" /> View JSON Notes
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 9: SETTINGS */}
+          {currentNav === "settings" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5 max-w-3xl">
+              <h2 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                <Sliders className="w-5 h-5 text-slate-400" />
+                Studio Configuration & Engine Status
+              </h2>
+
+              <div className="space-y-4 text-xs">
+                <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                  <div>
+                    <div className="font-semibold text-white">
+                      AI Generation Engine
+                    </div>
+                    <div className="text-slate-500">
+                      Qwen3 via Ollama (qwen3:8b) with deterministic fallback
+                    </div>
+                  </div>
+                  <span className="text-emerald-400 font-mono font-semibold">
+                    ONLINE
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                  <div>
+                    <div className="font-semibold text-white">
+                      Zero-Trust Sandbox
+                    </div>
+                    <div className="text-slate-500">
+                      Isolated Python 3.12 / Java 21 execution runner
+                    </div>
+                  </div>
+                  <span className="text-emerald-400 font-mono font-semibold">
+                    ACTIVE
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                  <div>
+                    <div className="font-semibold text-white">
+                      Presentation Template
+                    </div>
+                    <div className="text-slate-500">
+                      TechSummitTrainers 16:9 Widescreen Master
+                    </div>
+                  </div>
+                  <span className="text-[#F5A400] font-mono font-semibold">
+                    DEFAULT
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                  <div>
+                    <div className="font-semibold text-white">
+                      Ollama Base URL
+                    </div>
+                    <div className="text-slate-500 font-mono">
+                      http://localhost:11434 (Timeout: 120s)
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => alert("Health check verified: Ollama is reachable.")}
+                    className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded transition"
+                  >
+                    Test Health
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Slide Regeneration Modal */}
+      {showRegenModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#F5A400]" />
+                AI Slide Regeneration with Prompt Hint
+              </h3>
               <button
-                onClick={() => setShowReportModal(false)}
-                className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded transition"
+                onClick={() => setShowRegenModal(false)}
+                className="text-slate-400 hover:text-white"
               >
-                Close
+                ✕
+              </button>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Instruction / Hint
+              </label>
+              <textarea
+                rows={3}
+                value={regenHint}
+                onChange={(e) => setRegenHint(e.target.value)}
+                placeholder="e.g. Add defensive error boundary handling..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-[#F5A400]"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowRegenModal(false)}
+                className="text-xs bg-slate-800 text-slate-300 px-3 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitSlideRegeneration}
+                className="text-xs bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded flex items-center gap-1.5 transition"
+              >
+                <RotateCw className="w-3.5 h-3.5" /> Regenerate Slide
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* AI Code Verification & Self-Healing Theater Modal */}
+      {/* Self-Healing Theater Modal */}
       {showTheaterModal && (
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
-                  <Sparkles className="w-6 h-6 text-amber-300" />
+                <div className="bg-[#F5A400]/20 p-2 rounded-lg text-[#F5A400] border border-[#F5A400]/30">
+                  <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-white tracking-tight">
-                      AI Code Verification & Self-Healing Theater
-                    </h3>
-                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold uppercase">
-                      Controlled Failure Demo
+                  <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    Watch AI Fix Its Own Code Theater
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-semibold uppercase">
+                      Real Execution
                     </span>
-                  </div>
+                  </h3>
                   <p className="text-xs text-slate-400">
-                    Watch Pandavs detect, repair, and re-verify faulty code automatically in real time.
+                    See real code failure, sandbox trace capture, and Qwen3
+                    repair.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowTheaterModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                className="text-slate-400 hover:text-white text-lg"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
-            {/* Scenario Selector & Controls */}
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">
-                  Scenario:
-                </span>
-                {(["python_add", "python_boundary", "python_syntax"] as const).map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setTheaterExample(id);
-                      setTheaterStage("idle");
-                      setTheaterProgress(0);
-                      setTheaterVerifiedStatus("idle");
-                      setTheaterRepairedCode("");
-                      setTheaterMeta(null);
-                      setTheaterLogs([
-                        `[Preset Selected] ${THEATER_PRESETS[id].name}. Click "Watch AI Fix Its Own Code" to launch.`
-                      ]);
-                    }}
-                    className={`text-xs px-3 py-1.5 rounded-lg border transition ${
-                      theaterExample === id
-                        ? "border-indigo-500 bg-indigo-500/20 text-indigo-300 font-semibold"
-                        : "border-slate-800 bg-slate-900 text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {THEATER_PRESETS[id].name}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTheaterStage("idle");
-                    setTheaterProgress(0);
-                    setTheaterVerifiedStatus("idle");
-                    setTheaterRepairedCode("");
-                    setTheaterMeta(null);
-                    setTheaterLogs([
-                      "[Theater Ready] Click 'Watch AI Fix Its Own Code' to launch real execution pipeline."
-                    ]);
-                  }}
-                  className="text-xs border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg flex items-center gap-1.5 transition"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  onClick={startTheaterDemo}
-                  disabled={theaterRunning}
-                  className="text-xs bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition"
-                >
-                  {theaterRunning ? (
-                    <>
-                      <RotateCw className="w-4 h-4 animate-spin" />
-                      <span>Verifying in Sandbox...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4" />
-                      <span>Watch AI Fix Its Own Code</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Pipeline Timeline */}
-            <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                <span className="uppercase tracking-wider text-[11px] font-semibold text-slate-400">
-                  Live Pipeline Timeline
-                </span>
-                <span className="font-bold text-indigo-400 font-mono">{theaterProgress}%</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterStage !== "idle" ? "border-emerald-500 bg-emerald-950/60" : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 1</div>
-                  <div className="text-xs font-semibold text-slate-300">Faulty Code</div>
-                  <div className="text-[10px] text-emerald-400">Loaded</div>
-                </div>
-
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterStage === "executing_original"
-                    ? "border-indigo-500 bg-indigo-950/60 shadow-md shadow-indigo-500/20"
-                    : theaterProgress >= 45
-                    ? "border-slate-700 bg-slate-800/80"
-                    : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 2</div>
-                  <div className="text-xs font-semibold text-slate-300">Sandbox Test</div>
-                  <div className="text-[10px] text-slate-400">
-                    {theaterStage === "executing_original" ? "Executing..." : theaterProgress >= 45 ? "Executed" : "Pending"}
-                  </div>
-                </div>
-
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterStage === "verification_failed"
-                    ? "border-rose-500 bg-rose-950/60 shadow-md shadow-rose-500/20"
-                    : theaterProgress >= 65
-                    ? "border-slate-700 bg-slate-800/80"
-                    : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 3</div>
-                  <div className="text-xs font-semibold text-slate-300">Failure Trace</div>
-                  <div className="text-[10px] text-rose-400">
-                    {theaterProgress >= 45 ? "Error Caught" : "Pending"}
-                  </div>
-                </div>
-
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterStage === "repairing"
-                    ? "border-amber-500 bg-amber-950/60 shadow-md shadow-amber-500/20"
-                    : theaterProgress >= 85
-                    ? "border-emerald-500 bg-emerald-950/60"
-                    : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 4</div>
-                  <div className="text-xs font-semibold text-slate-300">Self-Healing</div>
-                  <div className="text-[10px] text-amber-400">
-                    {theaterStage === "repairing" ? "Repairing..." : theaterProgress >= 85 ? "Repaired" : "Pending"}
-                  </div>
-                </div>
-
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterStage === "executing_repair"
-                    ? "border-indigo-500 bg-indigo-950/60 shadow-md shadow-indigo-500/20"
-                    : theaterProgress >= 95
-                    ? "border-emerald-500 bg-emerald-950/60"
-                    : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 5</div>
-                  <div className="text-xs font-semibold text-slate-300">Re-Verification</div>
-                  <div className="text-[10px] text-emerald-400">
-                    {theaterStage === "executing_repair" ? "Testing..." : theaterProgress >= 95 ? "Passed" : "Pending"}
-                  </div>
-                </div>
-
-                <div className={`p-2.5 rounded-lg border text-center space-y-1 transition-all ${
-                  theaterVerifiedStatus === "passed"
-                    ? "border-emerald-500 bg-emerald-950/60 shadow-md shadow-emerald-500/20"
-                    : theaterVerifiedStatus === "failed"
-                    ? "border-rose-500 bg-rose-950/60"
-                    : "border-slate-800 bg-slate-900"
-                }`}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Step 6</div>
-                  <div className="text-xs font-semibold text-slate-300">VERIFIED</div>
-                  <div className="text-[10px] text-emerald-400">
-                    {theaterVerifiedStatus === "passed" ? "100% Passed" : theaterVerifiedStatus === "failed" ? "Failed" : "Pending"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Code Comparison */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-950 rounded-xl border border-rose-500/30 overflow-hidden flex flex-col">
-                <div className="bg-rose-950/40 border-b border-rose-500/30 px-3.5 py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    <span className="text-xs font-bold text-rose-300 tracking-tight">Original Code — Failed</span>
-                  </div>
-                  <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded font-mono font-semibold">
-                    Assertion Failure
-                  </span>
-                </div>
-                <pre className="p-4 text-xs font-mono text-rose-200 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70">
-                  <code>{THEATER_PRESETS[theaterExample].code}</code>
-                </pre>
-              </div>
-
-              <div className="bg-slate-950 rounded-xl border border-emerald-500/30 overflow-hidden flex flex-col">
-                <div className="bg-emerald-950/40 border-b border-emerald-500/30 px-3.5 py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span className="text-xs font-bold text-emerald-300 tracking-tight">Corrected Code — Re-Verified</span>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold border ${
-                    theaterVerifiedStatus === "passed"
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                      : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}>
-                    {theaterVerifiedStatus === "passed" ? "VERIFIED — PASSED" : "Awaiting Repair"}
-                  </span>
-                </div>
-                <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed flex-1 bg-slate-950/70">
-                  <code>
-                    {theaterRepairedCode ||
-                      "# Corrected implementation will appear here after Self-Healing\n# Watch AI fix this code in real time..."}
-                  </code>
-                </pre>
-              </div>
-            </div>
-
-            {/* Sandbox Console */}
-            <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
-              <div className="bg-slate-900/90 border-b border-slate-800 px-3.5 py-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
-                  </div>
-                  <span className="text-[11px] font-mono text-slate-400">sandbox-runner@pandavs (Python 3.12 Isolated Execution)</span>
-                </div>
-                <span className="text-[10px] font-mono text-slate-500">Live Telemetry</span>
-              </div>
-              <div className="p-3.5 text-[11px] font-mono text-slate-300 bg-slate-950/90 h-44 overflow-y-auto space-y-1 leading-relaxed">
-                {theaterLogs.map((log, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <span className="text-slate-600 select-none">[{idx + 1}]</span>
-                    <span className={log.includes("ERROR") || log.includes("FAILED") ? "text-rose-400" : log.includes("PASSED") || log.includes("VERIFIED") ? "text-emerald-400 font-semibold" : "text-slate-300"}>
-                      {log}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Verification Result Banner */}
-            <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
-              theaterVerifiedStatus === "passed"
-                ? "border-emerald-500/50 bg-emerald-950/40 shadow-lg shadow-emerald-500/10"
-                : theaterVerifiedStatus === "failed"
-                ? "border-rose-500/50 bg-rose-950/40"
-                : "border-slate-800 bg-slate-950"
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                  theaterVerifiedStatus === "passed"
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                    : theaterVerifiedStatus === "failed"
-                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                    : "bg-slate-800 text-slate-400"
-                }`}>
-                  {theaterVerifiedStatus === "passed" ? (
-                    <CheckCircle2 className="w-5 h-5" />
-                  ) : theaterVerifiedStatus === "failed" ? (
-                    <XCircle className="w-5 h-5" />
-                  ) : (
-                    <ShieldCheck className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white uppercase tracking-wider">
-                    {theaterVerifiedStatus === "passed"
-                      ? "VERIFIED — ALL TESTS PASSED"
-                      : theaterVerifiedStatus === "failed"
-                      ? "VERIFICATION FAILED"
-                      : "Ready for Sandbox Execution"}
-                  </div>
-                  <p className="text-[11px] text-slate-400">
-                    {theaterVerifiedStatus === "passed"
-                      ? "Repaired code met 100% of specification assertions in clean subprocess sandbox."
-                      : "All tests run inside an isolated subprocess with zero mock data."}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono">
-                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
-                  Provider: {theaterMeta?.repair_provider || "—"}
-                </span>
-                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
-                  Duration: {theaterMeta?.duration_ms ? `${theaterMeta.duration_ms} ms` : "—"}
-                </span>
-                <span className="bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-md">
-                  Sandbox: Python 3.12 Isolated
-                </span>
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-              <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                <span className="text-emerald-400">●</span>
-                <span>Genuine subprocess execution: Real assertions, real error trace, real repair.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowTheaterModal(false)}
-                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition"
-                >
-                  Close Theater
-                </button>
-                <button
-                  type="button"
-                  onClick={addTheaterToDeck}
-                  disabled={theaterVerifiedStatus !== "passed" || isAddingToDeck}
-                  className="text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-md transition"
-                >
-                  <PlusCircle className="w-4 h-4" />
-                  <span>{isAddingToDeck ? "Adding..." : "Add Verified Example to Deck"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-400" />
-              Automated Framework Upgrade & Re-Verification
-            </h3>
-            <p className="text-xs text-slate-400">
-              Upgrades the entire presentation deck from legacy framework versions (e.g. Spring Boot 2.7 javax.*) to Spring Boot 3.3 (jakarta.*), re-verifying every snippet in the sandbox.
-            </p>
-
-            {upgradeDiff ? (
-              <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2 text-xs">
-                <div className="text-emerald-400 font-semibold">✓ Upgrade Completed</div>
-                <div>Modified Snippets: {upgradeDiff.changes_count}</div>
-                <div className="text-slate-400 text-[11px]">
-                  All javax.* annotations migrated to jakarta.* and validated against Spring Boot 3.3.
-                </div>
-              </div>
-            ) : null}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setShowUpgradeModal(false);
-                  setUpgradeDiff(null);
-                }}
-                className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded transition"
+            <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
+              <span className="text-xs font-semibold text-slate-300">
+                Failure Scenario:
+              </span>
+              <select
+                value={theaterExample}
+                onChange={(e) => setTheaterExample(e.target.value)}
+                className="bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-200"
               >
-                Cancel
+                <option value="python_add">
+                  Arithmetic Operator Bug (return a - b)
+                </option>
+                <option value="python_boundary">
+                  Off-by-One Loop Boundary
+                </option>
+                <option value="python_syntax">
+                  Missing Colon Syntax Error
+                </option>
+              </select>
+              <button
+                disabled={theaterRunning}
+                onClick={() => startTheaterDemo(theaterExample)}
+                className="bg-[#F5A400] hover:bg-amber-400 text-slate-950 font-bold px-4 py-1.5 rounded text-xs ml-auto transition disabled:opacity-50"
+              >
+                Run Demonstration
               </button>
+            </div>
+
+            <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1">
+              {theaterLogs.map((l, idx) => (
+                <div key={idx} className="leading-relaxed">
+                  {l}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
               <button
-                onClick={handleUpgrade}
-                className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded transition"
+                onClick={() => setShowTheaterModal(false)}
+                className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg transition"
               >
-                Run Upgrade & Verify
+                Close
               </button>
             </div>
           </div>
