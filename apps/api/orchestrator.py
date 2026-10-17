@@ -70,8 +70,11 @@ class Orchestrator:
 
             # Stage 2: Generator
             await self.emit_event(deck_id, "generator", 35, "Generating schema-valid slide deck and code blocks...")
-            await asyncio.sleep(0.3)
             deck = self.generator.generate_deck(plan)
+            deck["deck_id"] = deck_id
+            deck["topic"] = topic
+            deck["level"] = level
+            deck["minutes"] = minutes
 
             # Stage 3: Verifier & Sandbox
             await self.emit_event(deck_id, "verifier", 55, "Executing snippets in isolated sandbox...")
@@ -227,12 +230,20 @@ class Orchestrator:
         if not target_slide:
             raise ValueError(f"Slide '{slide_id}' not found in deck '{deck_id}'")
 
-        # Update slide content
-        if hint:
+        # Update slide content via Gemini AI or fallback
+        if hasattr(self.generator, "regenerate_slide_with_ai") and hint:
+            ai_updated = self.generator.regenerate_slide_with_ai(deck, slide_id, hint)
+            if ai_updated:
+                for idx, s in enumerate(deck.get("slides", [])):
+                    if s.get("id") == slide_id:
+                        deck["slides"][idx] = ai_updated
+                        target_slide = ai_updated
+                        break
+        elif hint:
             target_slide["notes"] = f"Updated: {hint}. " + target_slide.get("notes", "")
             target_slide["bullets"].append(f"Regenerated focus: {hint[:30]}")
-            if len(target_slide["bullets"]) > 5:
-                target_slide["bullets"] = target_slide["bullets"][-5:]
+            if len(target_slide["bullets"]) > 7:
+                target_slide["bullets"] = target_slide["bullets"][-7:]
 
         # Re-verify code on this slide
         for block in target_slide.get("code", []):
